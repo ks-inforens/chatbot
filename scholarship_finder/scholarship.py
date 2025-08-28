@@ -1,0 +1,89 @@
+import requests
+
+def get_user_details():
+    print("Please enter your details below.")
+    citizenship = input("Country of citizenship: ")
+    preferred_country = input("Preferred country for study: ")
+    level = input("Level of study (Undergraduate, Postgraduate, PhD): ")
+
+    uni_input = input("Preferred university/universities (comma-separated, press Enter to skip): ")
+    preferred_universities = [u.strip() for u in uni_input.split(",")] if uni_input else []
+
+    field = input("Field of study (e.g. Data Science, Engineering): ")
+    course_intake = input("Course intake (e.g. September 2025) (optional, press Enter to skip): ")
+    academic_perf = input("Current/previous academic performance (GPA, % or degree class) (optional, press Enter to skip): ")
+    age = input("Age (optional, press Enter to skip): ")
+    gender = input("Gender (optional, press Enter to skip): ")
+    disability = input("Disability status (optional, press Enter to skip): ")
+    extracurricular = input("Any extracurricular activities (e.g. sports) (optional, press Enter to skip): ")
+
+    return {
+        "citizenship": citizenship,
+        "preferred_country": preferred_country,
+        "level": level,
+        "preferred_universities": preferred_universities,
+        "field": field,
+        "course_intake": course_intake if course_intake else None,
+        "academic_perf": academic_perf if academic_perf else None,
+        "age": age if age else None,
+        "gender": gender if gender else None,
+        "disability": disability if disability else None,
+        "extracurricular": extracurricular if extracurricular else None,
+    }
+
+def build_prompt(user):
+    base = (
+        f"List only the current scholarships available to international students from {user['citizenship']} "
+        f"who want to pursue {user['level']} studies in {user['preferred_country']} in the field of {user['field']}."
+    )
+
+    if user["preferred_universities"]:
+        unis = ", ".join(user["preferred_universities"])
+        base += f" The student prefers the following universities: {unis}. Prioritize any relevant scholarships from them."
+    if user["course_intake"]:
+        base += f" The course intake is {user['course_intake']}."
+    if user["academic_perf"]:
+        base += f" Academic performance: {user['academic_perf']}."
+    if user["age"]:
+        base += f" Age: {user['age']}."
+    if user["gender"]:
+        base += f" Gender: {user['gender']}."
+    if user["disability"]:
+        base += f" Disability status: {user['disability']}."
+    if user["extracurricular"]:
+        base += f" Extracurricular activities: {user['extracurricular']}."
+
+    base += (
+        "\nOnly list the scholarships. For each, include ONLY the name. "
+        "Do not include internal thoughts, reasoning, or citations. Don't write anything else."
+    )
+
+    return base.strip()
+
+def fetch_scholarships(prompt):
+    from flask import current_app
+    url = "https://api.perplexity.ai/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {current_app.config.get("PERPLEXITY_API_KEY")}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "sonar",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 1000,
+        "reasoning_effort": "medium"
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        output = data["choices"][0]["message"]["content"]
+        return output
+    else:
+        raise Exception(f"Error {response.status_code}: {response.text}")
+
+if __name__ == "__main__":
+    user_data = get_user_details()
+    prompt = build_prompt(user_data)
+    fetch_scholarships(prompt)
