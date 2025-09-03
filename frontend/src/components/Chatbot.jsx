@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { askQuestion } from "../data/api";
 import { motion, AnimatePresence } from "framer-motion";
-import nori from "./nori.png";
 import { CircleStop, Mic, Send } from "lucide-react";
 import {
   FaThumbsUp,
@@ -620,7 +619,7 @@ export default function Chatbot() {
         </AnimatePresence>
 
         <motion.img
-          src={nori}
+          src="/nori.png"
           alt="Nori"
           className="nori-icon w-14 h-14 md:w-18 md:h-18 cursor-pointer rounded-full relative"
           onClick={() => setOpen(!open)}

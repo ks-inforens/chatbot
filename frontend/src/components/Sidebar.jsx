@@ -16,7 +16,7 @@ export default function Sidebar({ selected, onSelect }) {
   ];
 
   return (
-    <aside className="flex flex-col bg-gradient-to-b from-[#fff5f0] via-white to-white border-r border-orange-800/30 py-4">
+    <aside className="h-full flex flex-row justify-around py-1 md:justify-start md:py-4 md:flex-col bg-[#fff5f0] md:bg-gradient-to-b from-[#fff5f0] via-white to-white border-r border-orange-800/30">
       {features.map(({ name, icon: Icon, path }) => (
         <Link
           key={name}

@@ -203,7 +203,7 @@ export default function AskNoriPage() {
 
     return (
         <div
-            className={`h-full w-full flex flex-col gap-6 py-4 px-8 md:px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-start"
+            className={`h-full w-full flex flex-col gap-6 py-4 px-8 md:px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-between"
                 }`}
         >
             {messages.length === 0 ? (

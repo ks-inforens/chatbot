@@ -14,18 +14,16 @@ export default function App() {
     <>
       <Header />
       <Chatbot />
-      <div className="flex fadeIn">
-        <div className="hidden md:block">
-          <Sidebar selected={selectedFeature} onSelect={setSelectedFeature} />
-        </div>
+      <div className="flex flex-col md:flex-row fadeIn">
+        <div className="hidden md:block"><Sidebar selected={selectedFeature} onSelect={setSelectedFeature} /></div>
         <div className="w-full min-h-[calc(100vh-82px)] bg-gradient-to-b from-[#fff5f0] via-white to-white p-2">
           <Routes>
             <Route path="/" element={<AskNoriPage />} />
             <Route path="/scholarship-finder" element={<ScholarshipFinderPage />} />
             <Route path="/sop-builder" element={<SOPBuilderPage />} />
           </Routes>
-        </div>
-      </div>
+          </div>
+      </div >
     </>
   );
 }
