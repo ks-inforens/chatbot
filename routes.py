@@ -4,6 +4,7 @@ from chatbot.chatbot import PerplexityChatbot
 from scholarship_finder.scholarship import build_prompt, fetch_scholarships
 import requests
 import time
+import json
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -116,10 +117,12 @@ def scholarships():
             return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
 
         prompt = build_prompt(data)
-        results = fetch_scholarships(prompt)
+        results = fetch_scholarships(prompt)  
+
+        scholarships_data = json.loads(results)
 
         return jsonify({
-            "scholarships": results.split("\n"),
+            "scholarships": scholarships_data["scholarships"],  
             "prompt": prompt
         })
 
