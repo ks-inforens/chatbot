@@ -39,7 +39,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                 Just answer a few questions and let us help you find the best scholarships for you!
             </p>
 
-            <form className="grid grid-cols-2 gap-x-8 gap-y-2">
+            <form className="flex flex-col md:grid md:grid-cols-2 gap-x-8 gap-y-6 md:gap-y-2">
                 {/* Left column */}
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
@@ -215,7 +215,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                 </div>
 
                 {/* Extracurricular Activities */}
-                <div className="flex flex-col gap-2 col-span-2 mt-6">
+                <div className="flex flex-col gap-2 col-span-2 md:mt-6">
                     <label className="text-sm mb-1">Extracurricular Activities</label>
                     <textarea
                         name="extracurricular"

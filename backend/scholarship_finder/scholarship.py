@@ -60,6 +60,61 @@ def build_prompt(user):
 
     return base.strip()
 
+def build_prompt(user):
+    lines = [
+        "You are an expert on global scholarships. A student has provided their profile details:\n",
+    ]
+
+    if user.get('citizenship'):
+        lines.append(f"Citizenship: {user['citizenship']}")
+    if user.get('level'):
+        lines.append(f"Desired level of study: {user['level']}")
+    if user.get('field'):
+        lines.append(f"Preferred field of study: {user['field']}")
+    if user.get('academic_perf'):
+        lines.append(f"Academic performance: {user['academic_perf']}")
+    if user.get('disability'):
+        lines.append(f"Disability: {user['disability']}")
+    if user.get('preferred_country'):
+        lines.append(f"Preferred country of study: {user['preferred_country']}")
+    if user.get('preferred_universities'):
+        lines.append(f"Preferred university: {user['preferred_universities']}")
+    if user.get('course_intake'):
+        lines.append(f"Course intake: {user['course_intake']}")
+    if user.get('age'):
+        lines.append(f"Age: {user['age']}")
+    if user.get('gender'):
+        lines.append(f"Gender: {user['gender']}")
+    if user.get('extracurricular'):
+        lines.append(f"Extracurricular activities: {user['extracurricular']}")
+
+    lines.append("""
+Based on this information, recommend the most relevant scholarships for this student.
+Respond ONLY with a SINGLE valid JSON object with a key "scholarships" whose value is an array of objects, each object has:
+  - "name": Name of the scholarship.
+  - "description": A SHORT description of the scholarship, maximum 20 words.
+
+Example output:
+{
+  "scholarships": [
+    {
+      "name": "Commonwealth Scholarship",
+      "description": "Covers tuition and living expenses for postgraduate study in the UK for students from eligible Commonwealth countries."
+    },
+    {
+      "name": "...",
+      "description": "..."
+    }
+  ]
+}
+
+The scholarships recommended must be relevant to the student's profile.
+Do not add any explanations or text before or after the JSON.
+Ensure the JSON you return is syntactically valid and parseable.
+""")
+
+    return "\n".join(lines)
+
 def fetch_scholarships(prompt):
     from flask import current_app
     url = "https://api.perplexity.ai/chat/completions"

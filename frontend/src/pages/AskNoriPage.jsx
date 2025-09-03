@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { askQuestion, sendFeedback } from "../components/api";
+import { askQuestion, sendFeedback } from "../data/api";
 import {
     FaThumbsUp,
     FaThumbsDown,
@@ -203,11 +203,11 @@ export default function AskNoriPage() {
 
     return (
         <div
-            className={`h-full w-full flex flex-col gap-6 py-4 px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-start"
+            className={`h-full w-full flex flex-col gap-6 py-4 px-8 md:px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-start"
                 }`}
         >
             {messages.length === 0 ? (
-                <h1 className="text-5xl bg-clip-text bg-gradient-to-b from-orange-900 to-orange-400 text-transparent text-center font-medium tracking-tighter">
+                <h1 className="text-4xl md:text-5xl bg-clip-text bg-gradient-to-b from-orange-900 to-orange-400 text-transparent text-center font-medium tracking-tighter">
                     what would you like to know?
                 </h1>
             ) : (

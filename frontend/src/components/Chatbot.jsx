@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { askQuestion } from "./api";
+import { askQuestion } from "../data/api";
 import { motion, AnimatePresence } from "framer-motion";
 import nori from "./nori.png";
 import { CircleStop, Mic, Send } from "lucide-react";
@@ -9,8 +9,9 @@ import {
   FaRegThumbsDown,
   FaRegThumbsUp,
 } from "react-icons/fa";
-import { Copy, Check } from "lucide-react"; 
+import { Copy, Check } from "lucide-react";
 import FeaturesDropdown from "./FeaturesDropdown";
+import { questions, options } from "../data/scholarshipFinderData";
 
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
@@ -21,14 +22,27 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // Feedback states
   const [feedbackMessageId, setFeedbackMessageId] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
+
+  // Mic / recording states
   const [listening, setListening] = useState(false);
   const [micSupported, setMicSupported] = useState(true);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
 
+  // Copy states
   const [copiedMessageIds, setCopiedMessageIds] = useState(new Set());
+
+  // Scholarship finder states
+  const [scholarshipActive, setScholarshipActive] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [scholarshipAnswers, setScholarshipAnswers] = useState({});
+
+  // Active feature state
+  const [activeFeature, setActiveFeature] = useState("Ask Nori");
 
   const recognitionRef = useRef(null);
   const finalTranscriptRef = useRef("");
@@ -41,6 +55,9 @@ export default function Chatbot() {
     );
   }, []);
   const userId = localStorage.getItem("userId") || null;
+
+  // Intro message visibility
+  const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo(0, scrollerRef.current.scrollHeight);
@@ -89,12 +106,18 @@ export default function Chatbot() {
     }
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowIntro(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const startRecording = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       alert("Microphone not supported in this browser.");
       return;
     }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       let mimeType = "audio/webm";
@@ -151,7 +174,6 @@ export default function Chatbot() {
     }
   };
 
-  // Copy handler that toggles tick icon for 3 seconds
   const handleCopy = (id, text) => {
     if (navigator.clipboard) {
       navigator.clipboard
@@ -172,18 +194,191 @@ export default function Chatbot() {
     }
   };
 
+  const handleFeatureSelect = (featureTitle) => {
+    setActiveFeature(featureTitle);
+    setMessages([]);
+    setInput("");
+    setLoading(false);
+
+    setScholarshipActive(false);
+    setCurrentQuestionIndex(0);
+    setScholarshipAnswers({});
+
+    if (featureTitle === "Scholarship Finder") {
+      setScholarshipActive(true);
+      setOpen(true);
+      askScholarshipQuestion(0);
+    } else if (featureTitle === "Ask Nori") {
+      setOpen(true);
+    }
+  };
+
+  // Map frontend question names to backend API expected keys
+  const questionToApiFieldMap = {
+    citizenship: "citizenship",
+    preferred_country: "preferred_country",
+    level: "level",
+    field: "field",
+    academic_perf: "academic_perf",
+    disability: "disability",
+    preferred_universities: "preferred_universities",
+    course_intake: "course_intake",
+    age: "age",
+    gender: "gender",
+    extracurricular: "extracurricular",
+  };
+
+  const askScholarshipQuestion = (index) => {
+    if (index >= questions.length) {
+      submitScholarshipAnswers();
+      return;
+    }
+
+    const questionObj = questions[index];
+
+    const questionText = questionObj.required
+      ? `${questionObj.question} (Required)`
+      : `${questionObj.question} (Optional)`;
+
+    let opts = [];
+    if (questionObj.optionsKey) {
+      opts = options[questionObj.optionsKey] || [];
+    }
+
+    if (!questionObj.required) {
+      opts = [...opts, "Skip"];
+    }
+
+    let optionsHtml = "";
+    if (opts.length > 0) {
+      optionsHtml =
+        "<div>" +
+        opts
+          .map(
+            (opt) =>
+              `<button class="scholarship-option-btn" data-option="${opt}" style="margin: 4px; padding: 4px 8px; border-radius: 6px; border: 1px solid #db5800; cursor: pointer;">${opt}</button>`
+          )
+          .join(" ") +
+        "</div>";
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: uid(),
+        role: "assistant",
+        content: questionText + (optionsHtml ? optionsHtml : ""),
+        isScholarshipQuestion: true,
+        questionIndex: index,
+      },
+    ]);
+  };
+
+  // Handle user answer in scholarship flow with key mapping and validation
+  const handleScholarshipAnswer = (answer) => {
+    const questionObj = questions[currentQuestionIndex];
+    const apiField = questionToApiFieldMap[questionObj.name] || questionObj.name;
+
+    if (questionObj.required) {
+      if (!answer || answer.trim().length === 0) {
+        addAssistantMessage("Sorry, please provide a valid input.");
+        return false;
+      }
+      if (questionObj.optionsKey) {
+        if (!options[questionObj.optionsKey].includes(answer)) {
+          addAssistantMessage("Sorry, please select a valid option.");
+          return false;
+        }
+      }
+    }
+
+    if (!questionObj.required && (answer.toLowerCase() === "skip" || answer === "")) {
+    } else {
+      setScholarshipAnswers((prev) => ({
+        ...prev,
+        [apiField]: answer,
+      }));
+    }
+
+    addUserMessage(answer);
+
+    setCurrentQuestionIndex((prev) => prev + 1);
+    askScholarshipQuestion(currentQuestionIndex + 1);
+
+    return true;
+  };
+
+  // Add assistant message helper
+  const addAssistantMessage = (content) => {
+    setMessages((prev) => [...prev, { id: uid(), role: "assistant", content }]);
+  };
+
+  // Add user message helper
+  const addUserMessage = (content) => {
+    setMessages((prev) => [...prev, { id: "user_" + uid(), role: "user", content }]);
+  };
+
+  // Submit scholarship answers to backend API with required keys only
+  const submitScholarshipAnswers = async () => {
+    setLoading(true);
+
+    const submissionData = {
+      citizenship: scholarshipAnswers["citizenship"] || "",
+      preferred_country: scholarshipAnswers["preferred_country"] || "",
+      level: scholarshipAnswers["level"] || "",
+      field: scholarshipAnswers["field"] || "",
+      academic_perf: scholarshipAnswers["academic_perf"] || "",
+      disability: scholarshipAnswers["disability"] || "",
+      preferred_universities: scholarshipAnswers["preferred_universities"] || "",
+      course_intake: scholarshipAnswers["course_intake"] || "",
+      age: scholarshipAnswers["age"] || "",
+      gender: scholarshipAnswers["gender"] || "",
+      extracurricular: scholarshipAnswers["extracurricular"] || ""
+    };
+
+    try {
+      const res = await fetch("/api/scholarships", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData),
+      });
+      const data = await res.json();
+
+      if (data.scholarships && data.scholarships.length > 0) {
+        const formatted = data.scholarships
+          .map((sch, idx) => `<b>${idx + 1}. ${sch.name}</b>\n${sch.description}`)
+          .join("\n\n");
+        addAssistantMessage(formatted);
+      } else {
+        addAssistantMessage("Sorry, no scholarships found matching your criteria.");
+      }
+    } catch (error) {
+      addAssistantMessage("Sorry, something went wrong processing your request.");
+    } finally {
+      setLoading(false);
+      setScholarshipActive(false);
+    }
+  };
+
+  // Main send handler for user input
   async function onSend(e) {
     e.preventDefault();
-    const q = input.trim();
-    if (!q) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
+
+    if (scholarshipActive) {
+      const handled = handleScholarshipAnswer(trimmedInput);
+      if (!handled) return;
+      setInput("");
+      return;
+    }
 
     setInput("");
-    finalTranscriptRef.current = "";
-    setMessages((prev) => [...prev, { id: uid(), role: "user", content: q }]);
+    setMessages((prev) => [...prev, { id: uid(), role: "user", content: trimmedInput }]);
     setLoading(true);
 
     try {
-      const { answer, messageId } = await askQuestion(q, sessionId, userId);
+      const { answer, messageId } = await askQuestion(trimmedInput, sessionId, userId);
       setMessages((prev) => [
         ...prev,
         { id: messageId, role: "assistant", content: answer, feedback: {} },
@@ -199,6 +394,27 @@ export default function Chatbot() {
     }
   }
 
+  // Event listener for option button clicks inside chat to handle scholarship options
+  useEffect(() => {
+    const container = document.querySelector(".chat-messages");
+
+    function onOptionClick(e) {
+      if (e.target.classList.contains("scholarship-option-btn")) {
+        const selectedOption = e.target.getAttribute("data-option");
+        if (scholarshipActive) {
+          handleScholarshipAnswer(selectedOption);
+          setInput("");
+        }
+      }
+    }
+
+    container?.addEventListener("click", onOptionClick);
+    return () => {
+      container?.removeEventListener("click", onOptionClick);
+    };
+  }, [scholarshipActive, currentQuestionIndex]);
+
+  // Feedback handlers (unchanged)
   async function handleThumbsUp(messageId) {
     setMessages((prev) =>
       prev.map((m) =>
@@ -238,7 +454,7 @@ export default function Chatbot() {
 
   return (
     <div>
-      <div aria-label="nori-container" className="fixed right-8 bottom-8 flex flex-col items-end gap-2 z-[999]">
+      <div aria-label="nori-container" className="fixed right-4 bottom-4 md:right-8 md:bottom-8 flex flex-col items-end gap-2 z-[999]">
         <AnimatePresence>
           {open && (
             <motion.div
@@ -248,139 +464,165 @@ export default function Chatbot() {
               exit={{ opacity: 0, scale: 0.8, y: 50 }}
               transition={{ duration: 0.3 }}
             >
-              {messages.length === 0 && (
-                <div className="flex items-center px-4 justify-center z-10 text-center min-h-96">
-                  <p className="text-gray-500 tracking-tight text-sm">
-                    Hey there! I’m Nori.<br />
-                    <strong>Got questions? I’ve got answers.</strong>
-                    <br />
-                    Ask me anything about studying abroad!
-                  </p>
+              {/* Headers */}
+              {activeFeature === "Ask Nori" && (
+                <div className="text-black/80 text-sm font-semibold p-4 pb-3 border-b border-gray-200 text-center fadeIn">
+                  Ask Nori
+                </div>
+              )}
+              {activeFeature === "Scholarship Finder" && (
+                <div className="text-black/80 text-sm font-semibold p-4 pb-3 border-b border-gray-200 text-center fadeIn">
+                  Scholarship Finder
+                </div>
+              )}
+              {activeFeature === "CV Builder" && (
+                <div className="bg-gray-400 text-white font-bold p-4 rounded-t-xl text-center relative">
+                  CV Builder
+                </div>
+              )}
+              {activeFeature === "SOP Builder" && (
+                <div className="bg-gray-400 text-white font-bold p-4 rounded-t-xl text-center relative">
+                  SOP Builder
                 </div>
               )}
 
-              <div className="chat-messages" ref={scrollerRef}>
-                {messages.map((m) => (
-                  <motion.div
-                    key={m.id}
-                    className={`text-sm px-3 py-2 rounded-2xl fadeIn ${m.role === "user" ? "user-msg-bot" : "assistant-msg-bot"
-                      }`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div dangerouslySetInnerHTML={{ __html: m.content.replace(/\n/g, "<br/>") }} />
-                    {m.role === "assistant" && (
-                      <div className="flex mt-2 gap-1">
-                        <div className="p-1 rounded-full cursor-pointer" onClick={() => handleThumbsUp(m.id)}>
-                          {m.feedback?.thumbsUp ? (
-                            <FaThumbsUp className="thumb-icon text-black/70" size={14} />
-                          ) : (
-                            <FaRegThumbsUp className="thumb-icon text-black/70" size={14} />
-                          )}
-                        </div>
-                        <div className="p-1 rounded-full cursor-pointer" onClick={() => handleThumbsDown(m.id)}>
-                          {m.feedback?.thumbsDown ? (
-                            <FaThumbsDown className="thumb-icon text-black/70" size={14} />
-                          ) : (
-                            <FaRegThumbsDown className="thumb-icon text-black/70" size={14} />
-                          )}
-                        </div>
-                        <div
-                          className="p-1 rounded-full cursor-pointer"
-                          onClick={() => handleCopy(m.id, m.content)}
-                          title="Copy message"
-                        >
-                          {copiedMessageIds.has(m.id) ? (
-                            <Check className="thumb-icon text-green-600" size={14} />
-                          ) : (
-                            <Copy className="thumb-icon text-black/70" size={14} />
-                          )}
+              {/* Content */}
+              {(activeFeature === "CV Builder" || activeFeature === "SOP Builder") && (
+                <div className="flex-grow flex justify-center items-center p-6 text-gray-600 font-medium">
+                  This feature is currently locked and coming soon.
+                </div>
+              )}
+
+              {(activeFeature === "Ask Nori" || activeFeature === "Scholarship Finder") && (
+                <>
+                  {messages.length === 0 && (
+                    <div className="flex flex-col items-center px-4 justify-center z-10 text-center min-h-96">
+                      <p className="text-gray-500 tracking-tight text-sm">
+                        Hey there! I’m Nori! 
+                      </p>
+                      <p className="text-gray-500 font-medium tracking-tight text-sm">
+                        Got questions? I’ve got answers.
+                      </p>
+                      <p className="text-gray-500 tracking-tight text-sm">
+                        Ask me anything about studying abroad!
+                      </p>
+                    </div>
+
+                  )}
+
+                  <div className="chat-messages flex-1 overflow-y-auto px-3" ref={scrollerRef}>
+                    {messages.map((m) => (
+                      <motion.div
+                        key={m.id}
+                        className={`text-sm px-3 py-2 rounded-2xl fadeIn ${m.role === "user" ? "user-msg-bot" : "assistant-msg-bot"
+                          }`}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div dangerouslySetInnerHTML={{ __html: m.content.replace(/\n/g, "<br/>") }} />
+                        {m.role === "assistant" && (
+                          <div className="flex mt-2 gap-1">
+                            <div className="p-1 rounded-full cursor-pointer" onClick={() => handleThumbsUp(m.id)}>
+                              {m.feedback?.thumbsUp ? (
+                                <FaThumbsUp className="thumb-icon text-black/70" size={14} />
+                              ) : (
+                                <FaRegThumbsUp className="thumb-icon text-black/70" size={14} />
+                              )}
+                            </div>
+                            <div className="p-1 rounded-full cursor-pointer" onClick={() => handleThumbsDown(m.id)}>
+                              {m.feedback?.thumbsDown ? (
+                                <FaThumbsDown className="thumb-icon text-black/70" size={14} />
+                              ) : (
+                                <FaRegThumbsDown className="thumb-icon text-black/70" size={14} />
+                              )}
+                            </div>
+                            <div
+                              className="p-1 rounded-full cursor-pointer"
+                              onClick={() => handleCopy(m.id, m.content)}
+                              title="Copy message"
+                            >
+                              {copiedMessageIds.has(m.id) ? (
+                                <Check className="thumb-icon text-green-600" size={14} />
+                              ) : (
+                                <Copy className="thumb-icon text-black/70" size={14} />
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    ))}
+                    {loading && (
+                      <div className="assistant-msg-bot px-3 py-2 rounded-2xl fadeIn text-sm">
+                        <div className="mt-1 flex h-3">
+                          <div className="flex gap-2 loader">
+                            <div className="w-2 h-2 rounded-full bg-black/20"></div>
+                            <div className="w-2 h-2 rounded-full bg-black/15"></div>
+                            <div className="w-2 h-2 rounded-full bg-black/25"></div>
+                          </div>
                         </div>
                       </div>
                     )}
-                  </motion.div>
-                ))}
-                {loading && (
-                  <div className="assistant-msg-bot px-3 py-2 rounded-2xl fadeIn text-sm">
-                    <div className="mt-1 flex h-3">
-                      <div className="flex gap-2 loader">
-                        <div className="w-2 h-2 rounded-full bg-black/20"></div>
-                        <div className="w-2 h-2 rounded-full bg-black/15"></div>
-                        <div className="w-2 h-2 rounded-full bg-black/25"></div>
+                  </div>
+
+                  {/* Input form */}
+                  <form className="w-full flex flex-col px-4 my-2 mb-4" onSubmit={onSend}>
+                    <div className="w-full flex gap-2 items-center rounded-full px-3 py-2 border-gradient-animation bg-gradient-to-r from-orange-400 via-yellow-500 to-red-500">
+                      <div className="flex items-center bg-white rounded-full gap-2 pr-3">
+                        <input
+                          className="w-full flex-1 text-sm outline-none border-none px-3 py-2"
+                          type="text"
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          placeholder={scholarshipActive ? "Answer the questions..." : "Ask anything..."}
+                          disabled={loading}
+                          autoFocus
+                        />
+                        <button type="submit" className="send-btn cursor-pointer" aria-label="send" disabled={loading}>
+                          <Send size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`mic-btn cursor-pointer ${listening || isRecording ? "listening" : ""}`}
+                          onClick={handleMicClick}
+                          title={listening || isRecording ? "Stop Listening" : "Speak"}
+                          aria-label="microphone"
+                        >
+                          {listening || isRecording ? (
+                            <CircleStop size={18} />
+                          ) : (
+                            <Mic size={18} color={listening || isRecording ? "#FF5722" : "#333"} />
+                          )}
+                        </button>
+                        <FeaturesDropdown onFeatureSelect={handleFeatureSelect} />
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {feedbackMessageId && (
-                <div className="w-full flex flex-col gap-2 text-sm shadow-lg inset-shadow-xs rounded-2xl p-4 fadeIn">
-                  <p>Please tell us how we can improve?</p>
-                  <textarea
-                    className="outline-0 text-black/70"
-                    placeholder="Type your feedback..."
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <button className="px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 cursor-pointer" onClick={() => setFeedbackMessageId(null)}>
-                      Cancel
-                    </button>
-                    <button className="px-3 py-1 rounded-full text-white bg-[#db5800] hover:bg-[#c04d00] cursor-pointer" onClick={submitFeedback}>
-                      Submit
-                    </button>
-                  </div>
-                </div>
+                  </form>
+                </>
               )}
-
-              <form className="w-full flex flex-col px-4 my-2 mb-4" onSubmit={onSend}>
-                <div className="w-full flex gap-2 items-center rounded-full px-3 py-2 border-gradient-animation bg-gradient-to-r from-orange-400 via-yellow-500 to-red-500">
-                  <div className="flex items-center bg-white rounded-full gap-2 pr-3">
-                    <input
-                      className="w-full flex-1 text-sm outline-none border-none px-3 py-2"
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Type your question"
-                    />
-                    <button type="submit" className="send-btn cursor-pointer" aria-label="send">
-                      <Send size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`mic-btn cursor-pointer ${listening || isRecording ? "listening" : ""}`}
-                      onClick={handleMicClick}
-                      title={listening || isRecording ? "Stop Listening" : "Speak"}
-                      aria-label="microphone"
-                    >
-                      {listening || isRecording ? <CircleStop size={18} /> : <Mic size={18} color={listening || isRecording ? "#FF5722" : "#333"} />}
-                    </button>
-                    <FeaturesDropdown />
-                  </div>
-                </div>
-              </form>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {!open && (
-          <motion.div
-            className="bg-[#db5800] text-white right-full bottom-full mb-2 tracking-tight leading-tight text-right px-6 py-3 rounded-xl max-w-sm shadow-lg cursor-pointer"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4 }}
-            onClick={() => setOpen(true)}
-          >
-            Hi, I'm Nori, your personal AI assistant. <br /> Ask me something about studying abroad.
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {!open && showIntro && (
+            <motion.div
+              className="bg-[#db5800] text-white text-sm md:text-base right-full bottom-full mb-2 tracking-tight leading-tight text-right px-6 py-3 rounded-xl max-w-sm shadow-lg cursor-pointer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.4 }}
+              onClick={() => setOpen(true)}
+            >
+              Hi, I'm Nori, your personal AI assistant. <br /> Ask me something about studying abroad.
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <motion.img
           src={nori}
           alt="Nori"
-          className="nori-icon w-18 h-18 cursor-pointer rounded-full relative"
+          className="nori-icon w-14 h-14 md:w-18 md:h-18 cursor-pointer rounded-full relative"
           onClick={() => setOpen(!open)}
           whileTap={{ scale: 0.9 }}
         />

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ScholarshipFinderForm from "../components/ScholarshipFinderForm";
+import SOPBuilderForm from "../components/SOPBuilderForm";
 import ReviewStage from "../components/ScholarshipReviewStage";
 import { Search } from "lucide-react";
 
@@ -28,8 +28,8 @@ function ScholarshipResults({ scholarships, error, onBack }) {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                         {scholarships.map((scholarship, i) => {
-                            const title = scholarship.name || "Scholarship Name";
-                            const description = scholarship.description || "Description not available.";
+                            const [title, ...descParts] = scholarship.split(" - ");
+                            const description = descParts.join(" - ") || "Description not available.";
 
                             return (
                                 <div
@@ -40,24 +40,30 @@ function ScholarshipResults({ scholarships, error, onBack }) {
                                     <div className="flex items-center justify-center w-16 bg-orange-100">
                                         <svg
                                             className="w-10 h-10 text-orange-600"
-                                            fill="none"
-                                            stroke="currentColor"
+                                            fill="none" stroke="currentColor"
                                             strokeWidth={2}
                                             viewBox="0 0 24 24"
                                             xmlns="http://www.w3.org/2000/svg"
                                         >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 014 0zM12 2v20m4-6v6a2 2 0 01-4 0v-6"
-                                            ></path>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 014 0zM12 2v20m4-6v6a2 2 0 01-4 0v-6"></path>
                                         </svg>
                                     </div>
 
                                     {/* Content area */}
-                                    <div className="flex flex-col gap-1 flex-1 py-6 px-6">
-                                        <h3 className="text-base font-semibold text-gray-900 mb-1">{title.trim()}</h3>
-                                        <p className="text-sm text-gray-600">{description.trim()}</p>
+                                    <div className="flex flex-col gap-4 justify-between flex-1 py-6">
+                                        <div>
+                                            <h3 className="text-base font-semibold text-gray-900 mb-1">{title.trim()}</h3>
+                                            <p className="text-sm text-gray-600">{description.trim()}</p>
+                                        </div>
+
+                                        <div className="flex">
+                                            <button
+                                                className="bg-orange-600 hover:bg-orange-700 text-white rounded px-4 py-1 text-sm font-semibold transition"
+                                                onClick={() => alert(`Apply clicked for: ${title.trim()}`)}
+                                            >
+                                                Apply
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -65,7 +71,7 @@ function ScholarshipResults({ scholarships, error, onBack }) {
                     </div>
 
                     <button
-                        className="px-10 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition"
+                        className="px-10 py-2 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer text-gray-800 transition"
                         onClick={onBack}
                     >
                         Find Again
@@ -190,7 +196,7 @@ export default function ScholarshipFinderPage() {
     return (
         <div className="w-full">
             {step === 1 && (
-                <ScholarshipFinderForm form={form} setForm={setForm} onNext={handleNext} />
+                <SOPBuilderForm form={form} setForm={setForm} onNext={handleNext} />
             )}
             {step === 2 && (
                 <ReviewStage form={form} onEdit={handleEdit} onSubmit={handleSubmit} />
