@@ -82,7 +82,7 @@ def build_prompt(user):
     if user.get('course_intake'):
         lines.append(f"Course intake: {user['course_intake']}")
     if user.get('age'):
-        lines.append(f"Age: {user['age']}")
+        lines.append(f"Date of Birth: {user['dob']} - use this to calculate age")
     if user.get('gender'):
         lines.append(f"Gender: {user['gender']}")
     if user.get('extracurricular'):
