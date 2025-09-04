@@ -31,7 +31,7 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
       title: "SOP Builder",
       subtitle: "Get a personalised SOP",
       icon: NotebookText,
-      locked: true,
+      locked: false,
       path: "/sop-builder",
     },
   ];

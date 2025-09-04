@@ -1,6 +1,21 @@
 import React from "react";
 
 export default function ReviewStage({ form, onEdit, onSubmit }) {
+    // Helper to format Date of Birth nicely or display N/A
+    const formatDOB = (dob) => {
+        if (!dob) return <span className="text-gray-800">N/A</span>;
+        try {
+            const date = new Date(dob);
+            return date.toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        } catch {
+            return <span className="text-gray-800">Invalid date</span>;
+        }
+    };
+
     return (
         <div className="w-full px-8 py-4 fadeIn">
             <h1 className="text-3xl mb-2">Scholarship Finder</h1>
@@ -30,7 +45,9 @@ export default function ReviewStage({ form, onEdit, onSubmit }) {
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Disability Status</dt>
-                        <dd className="text-base">{(form.disability === "Yes" ? form.disabilityDetails : form.disability) || <span className="text-gray-800">None</span>}</dd>
+                        <dd className="text-base">
+                            {(form.disability === "Yes" ? form.disabilityDetails : form.disability) || <span className="text-gray-800">None</span>}
+                        </dd>
                     </div>
                 </div>
 
@@ -50,18 +67,20 @@ export default function ReviewStage({ form, onEdit, onSubmit }) {
                     </div>
                     <div className="flex gap-12">
                         <div className="flex flex-col gap-1">
-                            <dt className="text-gray-500 text-sm">Age</dt>
-                            <dd className="text-base">{form.age || <span className="text-gray-800">N/A</span>}</dd>
+                            <dt className="text-gray-500 text-sm">Date of Birth</dt>
+                            <dd className="text-base">{formatDOB(form.dob)}</dd>
                         </div>
                         <div className="flex flex-col gap-1">
                             <dt className="text-gray-500 text-sm">Gender</dt>
                             <dd className="text-base">{form.gender || <span className="text-gray-800">N/A</span>}</dd>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                        <dt className="text-gray-500 text-sm">If Yes – Specify</dt>
-                        <dd className="text-base text-gray-800">{form.disability === "Yes" ? form.disabilityDetails : "N/A"}</dd>
-                    </div>
+                    {form.disability === "Yes" && (
+                        <div className="flex flex-col gap-1">
+                            <dt className="text-gray-500 text-sm">If Yes – Specify</dt>
+                            <dd className="text-base text-gray-800">{form.disabilityDetails || "N/A"}</dd>
+                        </div>
+                    )}
                 </div>
             </div>
 

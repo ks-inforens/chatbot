@@ -108,7 +108,10 @@ def build_sop_prompt(user_inputs):
     base_prompt += "Here are my details:\n"
 
     optional_fields = [
-        ("academic_qualifications", "My academic qualifications are"),
+        ("degree", "My academic qualifications include a degree in"),
+        ("qualification_university", "I received my academic qualification from the university/school of"),
+        ("graduation_year", "My academic qualifications were completed in the year"),
+        ("relevant_subjects", "My relevant subjects within the degree are"),
         ("key_skills", "My key skills are"),
         ("strengths", "My strengths are"),
         ("why_field", "I want to pursue this field because"),

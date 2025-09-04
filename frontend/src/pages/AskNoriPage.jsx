@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { askQuestion, sendFeedback } from "../data/api";
+import { API_BASE_URL, askQuestion, sendFeedback } from "../data/api";
 import {
     FaThumbsUp,
     FaThumbsDown,
@@ -109,7 +109,7 @@ export default function AskNoriPage() {
                 );
 
                 try {
-                    const res = await fetch("/api/transcribe", { method: "POST", body: formData });
+                    const res = await fetch(`${API_BASE_URL}/transcribe`, { method: "POST", body: formData });
                     const data = await res.json();
                     setInput(data.text || "");
                 } catch (err) {
@@ -203,7 +203,7 @@ export default function AskNoriPage() {
 
     return (
         <div
-            className={`h-full w-full flex flex-col gap-6 py-4 px-8 md:px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-between"
+            className={`w-full flex flex-col gap-6 py-4 px-8 md:px-24 items-center transition-all duration- fadeIn ${messages.length === 0 ? "justify-center pb-24 gap-8" : "justify-between"
                 }`}
         >
             {messages.length === 0 ? (
@@ -218,7 +218,7 @@ export default function AskNoriPage() {
                     {messages.map((m) => (
                         <div
                             key={m.id}
-                            className={`leading-6 text-sm fadeIn ${m.role === "user" ? "user-msg mt-8 mb-2 first:mt-0" : "assistant-msg text-black/70"}`}
+                            className={`leading-5 md:leading-6 text-sm fadeIn md:max-w-[80%] ${m.role === "user" ? "user-msg mt-8 mb-2 first:mt-0" : "assistant-msg text-black/70"}`}
                         >
                             <div dangerouslySetInnerHTML={{ __html: m.content.replace(/\n/g, "<br/>") }} />
                             {m.role === "assistant" && (
@@ -264,7 +264,8 @@ export default function AskNoriPage() {
 
             <form className="w-full flex" onSubmit={handleSend}>
                 <div className="w-full flex gap-2 items-center rounded-full px-3 py-2 border-gradient-animation bg-gradient-to-r from-orange-400 via-yellow-500 to-red-500">
-                    <div className="flex gap-1 w-full py-2 bg-white rounded-full px-4">
+                    <div className="flex items-center gap-1 w-full py-2 bg-white rounded-full px-4">
+                        <img src="/nori.png" alt="Nori" className="w-8 h-8" />
                         <input
                             className="w-full text-sm px-1 text-black/80"
                             type="text"
@@ -274,7 +275,7 @@ export default function AskNoriPage() {
                         />
                         <div className="flex items-center hover:bg-gray-100 justify-center p-2 rounded-full cursor-pointer">
                             <button className="text-sm" type="submit">
-                                <Send className="text-orange-900/70 cursor-pointer" size={18} />
+                                <Send className="text-black/80 cursor-pointer" size={18} />
                             </button>
                         </div>
                         <div
@@ -285,7 +286,7 @@ export default function AskNoriPage() {
                                 {listening || isRecording ? (
                                     <FaSquareFull className="cursor-pointer text-white p-1" size={18} />
                                 ) : (
-                                    <FaMicrophone className={`cursor-pointer text-orange-900/70`} size={18} />
+                                    <FaMicrophone className={`cursor-pointer text-black/80`} size={18} />
                                 )}
                             </button>
                         </div>

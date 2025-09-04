@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import SOPBuilderForm from "../components/SOPBuilderForm";
 import SOPBuilderReviewStage from "../components/SOPBuilderReviewStage";
 import { WandSparkles, Search } from "lucide-react";
+import { API_BASE_URL } from "../data/api";
 
 const downloadFile = (blob, filename) => {
     const link = document.createElement("a");
@@ -60,7 +61,10 @@ export default function SOPBuilderPage() {
             word_count_target: form.wordCountTarget,
             tone: form.tone,
             key_skills: form.keySkills,
-            academic_qualifications: `${form.degree}, ${form.qualificationUniversity}, ${form.graduationYear}, ${form.relevantSubjects}`.replace(/(^[,\s]+)|([,\s]+$)/g, ""),
+            degree: form.degree,
+            qualification_university: form.qualificationUniversity,
+            graduation_year: form.graduationYear,
+            relevant_subjects: form.relevantSubjects,
             strengths: form.strengths,
             why_field: form.whyFieldOfStudy,
             why_uni: form.whyUniversity,
@@ -72,7 +76,7 @@ export default function SOPBuilderPage() {
         };
 
         try {
-            const response = await fetch("/api/sop", {
+            const response = await fetch(`${API_BASE_URL}/sop`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -100,7 +104,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch("/api/sop/download/pdf", {
+            const response = await fetch(`${API_BASE_URL}/sop/download/pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
@@ -124,7 +128,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch("/api/sop/download/docx", {
+            const response = await fetch(`${API_BASE_URL}/sop/download/docx`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
@@ -145,12 +149,12 @@ export default function SOPBuilderPage() {
 
     if (loading) {
         return (
-            <div className="px-8 py-4 fadeIn">
+            <div className="w-full px-8 py-4 fadeIn">
                 <h1 className="text-3xl mb-2">Personalised SOP Builder</h1>
                 <p className="w-full text-sm text-black/50 pb-4 mb-6 border-b border-black/10">
                     Share your story in detail - we'll craft it into a standout SOP
                 </p>
-                <div className="h-full flex flex-col gap-4 items-center justify-center py-32">
+                <div className="flex flex-col gap-4 items-center justify-center py-32">
                     <Search className="text-orange-700" />
                     <p className="text-black/60 text-center text-md">
                         Crafting the perfect SOP for you. <br />

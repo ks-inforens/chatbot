@@ -1,5 +1,7 @@
+export const API_BASE_URL = 'http:localhost:5000/api';
+
 export async function askQuestion(question, sessionId, userId) {
-    const res = await fetch('/api/ask', {
+    const res = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, sessionId, userId })
@@ -10,7 +12,7 @@ export async function askQuestion(question, sessionId, userId) {
 }
 
 export async function sendFeedback(messageId, thumbsUp, thumbsDown) {
-    await fetch("/api/feedback", {
+    await fetch(`${API_BASE_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId, thumbsUp, thumbsDown }),

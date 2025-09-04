@@ -4,7 +4,6 @@ const countries = ["India", "United States", "United Kingdom", "Australia", "Can
 const studyLevels = ["Undergraduate", "Post Graduate", "PhD"];
 const fields = ["Engineering", "Arts", "Science", "Business"];
 const universities = ["Harvard", "Oxford", "MIT", "Stanford"];
-const ages = Array.from({ length: 50 }, (_, i) => i + 16);
 
 export default function SOPBuilderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
@@ -57,7 +56,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     value={form.wordCountTarget || ""}
                                     onChange={handleChange}
                                     placeholder="Word count"
-                                    className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                 />
                             </div>
 
@@ -67,7 +66,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     name="tone"
                                     value={form.tone || ""}
                                     onChange={handleChange}
-                                    className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                 >
                                     <option value="">Select</option>
                                     <option value="Formal">Formal</option>
@@ -86,7 +85,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="countryOfOrigin"
                                 value={form.countryOfOrigin || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select country</option>
                                 {countries.map((c) => (
@@ -105,7 +104,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="preferredCountryOfStudy"
                                 value={form.preferredCountryOfStudy || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select country</option>
                                 {countries.map((c) => (
@@ -124,7 +123,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="preferredUniversity"
                                 value={form.preferredUniversity || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select university</option>
                                 {universities.map((u) => (
@@ -148,7 +147,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 value={form.name || ""}
                                 onChange={handleChange}
                                 placeholder="Your name"
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             />
                         </div>
 
@@ -160,7 +159,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="intendedDegree"
                                 value={form.intendedDegree || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select your level</option>
                                 {studyLevels.map((level) => (
@@ -179,7 +178,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="preferredFieldOfStudy"
                                 value={form.preferredFieldOfStudy || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select your field</option>
                                 {fields.map((f) => (
@@ -206,7 +205,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     value={form.degree || ""}
                                     onChange={handleChange}
                                     placeholder="Degree"
-                                    className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                 />
                             </div>
                             <div className="flex flex-col gap-2">
@@ -217,7 +216,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     value={form.qualificationUniversity || ""}
                                     onChange={handleChange}
                                     placeholder="University"
-                                    className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                 />
                             </div>
                         </div>
@@ -230,11 +229,13 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="graduationYear"
                                 value={form.graduationYear || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Year</option>
-                                {Array.from({ length: 51 }, (_, i) => 1970 + i).map((year) => (
-                                    <option key={year} value={year}>{year}</option>
+                                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                                    <option key={year} value={year}>
+                                        {year}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -247,7 +248,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 value={form.relevantSubjects || ""}
                                 onChange={handleChange}
                                 placeholder="Field"
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             />
                         </div>
                     </div>
@@ -259,7 +260,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 name="keySkills"
                                 value={form.keySkills || ""}
                                 onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select skills</option>
                                 <option value="Communication">Communication</option>
@@ -279,7 +280,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 value={form.strengths || ""}
                                 onChange={handleChange}
                                 placeholder="List your strengths"
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             />
                         </div>
                     </div>

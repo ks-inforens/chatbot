@@ -188,7 +188,6 @@ select {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  max-width: 80%;
   font-weight: 600;
   font-size: 18px;
 }
@@ -196,7 +195,6 @@ select {
 .assistant-msg {
   align-self: flex-start;
   background: none;
-  max-width: 80%;
   word-wrap: break-word;
 }
 

@@ -5,7 +5,6 @@ export const options = {
   universities: ["Harvard", "Oxford", "MIT", "Stanford"],
   disabilityOptions: ["Yes", "No"],
   genders: ["Male", "Female", "Other"],
-  ages: Array.from({ length: 50 }, (_, i) => i + 16),
 };
 
 export const questions = [
@@ -26,7 +25,7 @@ export const questions = [
     optionsKey: "studyLevels",
     required: true,
     type: "select",
-  },  
+  },
   {
     name: "field",
     question: "What is your preferred field of study?",
@@ -80,13 +79,12 @@ export const questions = [
     type: "text",
   },
   {
-    name: "age",
-    question: "What is your age?",
-    label: "Age",
-    placeholder: "Select",
-    optionsKey: "ages",
+    name: "dob",
+    question: "What is your date of birth?",
+    label: "Date of Birth",
+    placeholder: "Select your birth date",
     required: false,
-    type: "select",
+    type: "date",
   },
   {
     name: "gender",

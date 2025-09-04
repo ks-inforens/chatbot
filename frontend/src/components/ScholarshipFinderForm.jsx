@@ -6,7 +6,13 @@ const fields = ["Engineering", "Arts", "Science", "Business"];
 const universities = ["Harvard", "Oxford", "MIT", "Stanford"];
 const disabilityOptions = ["Yes", "No"];
 const genders = ["Male", "Female", "Other"];
-const ages = Array.from({ length: 50 }, (_, i) => i + 16);
+
+// Helper function to get date string of exactly 18 years ago from today
+const getMinDOB = () => {
+    const today = new Date();
+    today.setFullYear(today.getFullYear() - 18);
+    return today.toISOString().split("T")[0];
+};
 
 export default function ScholarshipFinderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
@@ -18,9 +24,17 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
     };
 
     const handleNext = () => {
-        // List the required fields
+        // List the required fields to validate
         const requiredFields = ["citizenship", "studyLevel", "field", "preferredCountry"];
 
+        // Validate Date of Birth (at least 18 years old)
+        const minDOB = getMinDOB();
+        if (!form.dob || form.dob > minDOB) {
+            setError("You must be at least 18 years old to apply.");
+            return;
+        }
+
+        // Validate required fields presence
         for (let field of requiredFields) {
             if (!form[field] || form[field].trim() === "") {
                 setError("Please fill out all required fields.");
@@ -31,6 +45,8 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
         setError("");
         onNext();
     };
+
+    const minDOB = getMinDOB();
 
     return (
         <div className="w-full py-4 px-8 fadeIn">
@@ -50,11 +66,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="citizenship"
                             value={form.citizenship}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Choose country...</option>
                             {countries.map((c) => (
-                                <option key={c} value={c}>{c}</option>
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -67,11 +85,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="studyLevel"
                             value={form.studyLevel}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select study level</option>
                             {studyLevels.map((level) => (
-                                <option key={level} value={level}>{level}</option>
+                                <option key={level} value={level}>
+                                    {level}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -84,11 +104,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="field"
                             value={form.field}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select your field</option>
                             {fields.map((f) => (
-                                <option key={f} value={f}>{f}</option>
+                                <option key={f} value={f}>
+                                    {f}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -101,7 +123,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             onChange={handleChange}
                             type="text"
                             placeholder="Mention your GPA or percentage"
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         />
                     </div>
 
@@ -111,11 +133,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="disability"
                             value={form.disability}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Have a disability?</option>
                             {disabilityOptions.map((d) => (
-                                <option key={d} value={d}>{d}</option>
+                                <option key={d} value={d}>
+                                    {d}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -131,11 +155,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="preferredCountry"
                             value={form.preferredCountry}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Choose country...</option>
                             {countries.map((c) => (
-                                <option key={c} value={c}>{c}</option>
+                                <option key={c} value={c}>
+                                    {c}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -146,11 +172,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             name="university"
                             value={form.university}
                             onChange={handleChange}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select your preferred university</option>
                             {universities.map((u) => (
-                                <option key={u} value={u}>{u}</option>
+                                <option key={u} value={u}>
+                                    {u}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -163,40 +191,38 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             onChange={handleChange}
                             type="text"
                             placeholder="When do you wish to start..."
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm mb-1">Age</label>
-                            <select
-                                name="age"
-                                value={form.age}
-                                onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                            >
-                                <option value="">Select</option>
-                                {ages.map((a) => (
-                                    <option key={a} value={a}>{a}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm mb-1">Date of Birth</label>
+                        <input
+                            name="dob"
+                            value={form.dob}
+                            onChange={handleChange}
+                            type="date"
+                            max={minDOB}
+                            defaultValue={minDOB}
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                        />
+                    </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm mb-1">Gender</label>
-                            <select
-                                name="gender"
-                                value={form.gender}
-                                onChange={handleChange}
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                            >
-                                <option value="">Select</option>
-                                {genders.map((g) => (
-                                    <option key={g} value={g}>{g}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm mb-1">Gender</label>
+                        <select
+                            name="gender"
+                            value={form.gender}
+                            onChange={handleChange}
+                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                        >
+                            <option value="">Select</option>
+                            {genders.map((g) => (
+                                <option key={g} value={g}>
+                                    {g}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     {form.disability === "Yes" && (
@@ -208,7 +234,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                                 onChange={handleChange}
                                 type="text"
                                 placeholder="List your disability status"
-                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             />
                         </div>
                     )}
