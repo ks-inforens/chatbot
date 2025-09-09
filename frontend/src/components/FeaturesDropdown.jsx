@@ -21,11 +21,11 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
       path: "/scholarship-finder",
     },
     {
-      title: "CV Generator",
+      title: "CV Builder",
       subtitle: "Create an ATS Friendly CV",
       icon: FileText,
-      locked: true,
-      path: "/cv-generator",
+      locked: false,
+      path: "/cv-builder",
     },
     {
       title: "SOP Builder",

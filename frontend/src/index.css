@@ -8,12 +8,11 @@ h2 {
   font-family: "Poppins", sans-serif;
 }
 
-input {
+input, button, textarea, select {
   outline: none;
 }
 
-select {
-  outline: none;
+select, button {
   cursor: pointer;
 }
 

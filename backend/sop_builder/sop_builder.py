@@ -95,7 +95,7 @@ def build_sop_prompt(user_inputs):
         f"I want you to write me a SOP"
     )
     if word_count:
-        base_prompt += f" following word limit count {word_count}."
+        base_prompt += f" following a strict minimum word count of 10% below {word_count} (i.e. if word count is 1000, minimum word count should be 900)."
 
     base_prompt += (
         "Make sure the SOP is ATS friendly and does not look like an AI wrote it. "

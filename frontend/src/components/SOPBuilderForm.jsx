@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-
-const countries = ["India", "United States", "United Kingdom", "Australia", "Canada"];
-const studyLevels = ["Undergraduate", "Post Graduate", "PhD"];
-const fields = ["Engineering", "Arts", "Science", "Business"];
-const universities = ["Harvard", "Oxford", "MIT", "Stanford"];
+import { sopOptions as options } from "../data/sopBuilderData";
 
 export default function SOPBuilderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
@@ -69,10 +65,11 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                 >
                                     <option value="">Select</option>
-                                    <option value="Formal">Formal</option>
-                                    <option value="Informal">Informal</option>
-                                    <option value="Professional">Professional</option>
-                                    <option value="Friendly">Friendly</option>
+                                    {options["tones"].map((t) => (
+                                        <option key={t} value={t}>
+                                            {t}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
@@ -88,7 +85,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select country</option>
-                                {countries.map((c) => (
+                                {options["countries"].map((c) => (
                                     <option key={c} value={c}>
                                         {c}
                                     </option>
@@ -107,7 +104,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select country</option>
-                                {countries.map((c) => (
+                                {options["countries"].map((c) => (
                                     <option key={c} value={c}>
                                         {c}
                                     </option>
@@ -126,7 +123,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select university</option>
-                                {universities.map((u) => (
+                                {options["universities"].map((u) => (
                                     <option key={u} value={u}>
                                         {u}
                                     </option>
@@ -162,7 +159,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select your level</option>
-                                {studyLevels.map((level) => (
+                                {options["studyLevels"].map((level) => (
                                     <option key={level} value={level}>
                                         {level}
                                     </option>
@@ -181,7 +178,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select your field</option>
-                                {fields.map((f) => (
+                                {options["fields"].map((f) => (
                                     <option key={f} value={f}>
                                         {f}
                                     </option>
@@ -232,9 +229,9 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Year</option>
-                                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
-                                    <option key={year} value={year}>
-                                        {year}
+                                {options["graduationYears"].map((y) => (
+                                    <option key={y} value={y}>
+                                        {y}
                                     </option>
                                 ))}
                             </select>
@@ -263,12 +260,11 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                             >
                                 <option value="">Select skills</option>
-                                <option value="Communication">Communication</option>
-                                <option value="Leadership">Leadership</option>
-                                <option value="Research">Research</option>
-                                <option value="Critical Thinking">Critical Thinking</option>
-                                <option value="Problem Solving">Problem Solving</option>
-                                {/* Add more if needed */}
+                                {options["keySkills"].map((s) => (
+                                    <option key={s} value={s}>
+                                        {s}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

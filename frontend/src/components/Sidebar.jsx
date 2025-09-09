@@ -11,7 +11,7 @@ export default function Sidebar({ selected, onSelect }) {
   const features = [
     { name: "Ask Nori", icon: MessageCircle, path: "/" },
     { name: "Scholarship Finder", icon: Award, path: "/scholarship-finder" },
-    { name: "CV Generator", icon: FileText, path: "/cv-generator" },
+    { name: "CV Builder", icon: FileText, path: "/cv-builder" },
     { name: "SOP Builder", icon: BookOpen, path: "/sop-builder" },
   ];
 

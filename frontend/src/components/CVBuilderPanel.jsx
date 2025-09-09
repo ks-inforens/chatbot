@@ -4,7 +4,7 @@ import FeaturesDropdown from "./FeaturesDropdown";
 export default function CVBuilderPanel({ onFeatureSelect }) {
   return (
     <>
-      <div className="bg-gray-400 text-white font-bold p-4 rounded-t-xl text-center relative">
+      <div className="text-black/80 text-sm font-semibold p-4 pb-3 border-b border-gray-200 text-center fadeIn">
         CV Builder
       </div>
 

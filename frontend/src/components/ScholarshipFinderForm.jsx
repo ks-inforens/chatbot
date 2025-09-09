@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-
-const countries = ["India", "United States", "United Kingdom", "Australia", "Canada"];
-const studyLevels = ["Undergraduate", "Post Graduate", "PhD"];
-const fields = ["Engineering", "Arts", "Science", "Business"];
-const universities = ["Harvard", "Oxford", "MIT", "Stanford"];
-const disabilityOptions = ["Yes", "No"];
-const genders = ["Male", "Female", "Other"];
+import { options } from "../data/scholarshipFinderData";
 
 // Helper function to get date string of exactly 18 years ago from today
 const getMinDOB = () => {
@@ -29,7 +23,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
 
         // Validate Date of Birth (at least 18 years old)
         const minDOB = getMinDOB();
-        if (!form.dob || form.dob > minDOB) {
+        if (form.dob && form.dob > minDOB) {
             setError("You must be at least 18 years old to apply.");
             return;
         }
@@ -69,7 +63,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Choose country...</option>
-                            {countries.map((c) => (
+                            {options["countries"].map((c) => (
                                 <option key={c} value={c}>
                                     {c}
                                 </option>
@@ -88,7 +82,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select study level</option>
-                            {studyLevels.map((level) => (
+                            {options["studyLevels"].map((level) => (
                                 <option key={level} value={level}>
                                     {level}
                                 </option>
@@ -107,7 +101,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select your field</option>
-                            {fields.map((f) => (
+                            {options["fields"].map((f) => (
                                 <option key={f} value={f}>
                                     {f}
                                 </option>
@@ -136,7 +130,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Have a disability?</option>
-                            {disabilityOptions.map((d) => (
+                            {options["disabilityOptions"].map((d) => (
                                 <option key={d} value={d}>
                                     {d}
                                 </option>
@@ -158,7 +152,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Choose country...</option>
-                            {countries.map((c) => (
+                            {options["countries"].map((c) => (
                                 <option key={c} value={c}>
                                     {c}
                                 </option>
@@ -175,7 +169,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select your preferred university</option>
-                            {universities.map((u) => (
+                            {options["universities"].map((u) => (
                                 <option key={u} value={u}>
                                     {u}
                                 </option>
@@ -217,7 +211,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                         >
                             <option value="">Select</option>
-                            {genders.map((g) => (
+                            {options["genders"].map((g) => (
                                 <option key={g} value={g}>
                                     {g}
                                 </option>

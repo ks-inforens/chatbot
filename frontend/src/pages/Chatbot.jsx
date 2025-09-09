@@ -31,9 +31,7 @@ export default function Chatbot() {
 
   const handleFeatureSelect = (featureTitle) => {
     setActiveFeature(featureTitle);
-    if (featureTitle === "Scholarship Finder" || featureTitle === "Ask Nori") {
-      setOpen(true);
-    }
+    setOpen(true);
   };
 
   const renderActivePanel = () => {
