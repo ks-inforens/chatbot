@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = 'https://inforens-chatbot.onrender.com/api';
 
 export async function askQuestion(question, sessionId, userId) {
     const res = await fetch(`${API_BASE_URL}/ask`, {
