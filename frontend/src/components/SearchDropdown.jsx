@@ -24,7 +24,7 @@ const SearchDropdown = ({
         className="w-full flex items-center justify-between cursor-pointer text-xs min-h-10 py-2 px-3 border border-orange-800/25 rounded-lg"
         type="button"
       >
-        <span className="flex items-center">
+        <span className="flex items-center text-left">
           {label}
           {typeof count === "number" && (
             <span className="ml-2 text-xs text-orange-700 font-medium">

@@ -1,6 +1,7 @@
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from fpdf import FPDF  
 
 def save_as_docx(text, filename="generated_cv.docx"):
     doc = Document()

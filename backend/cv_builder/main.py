@@ -1,9 +1,8 @@
 import sys
-from parse_cv import extract_info_from_pdf, extract_info_from_docx
-from prompt_builder import build_prompt
-from generate_cv import call_perplexity  
-from save import save_as_docx, save_as_pdf
-
+from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx
+from cv_builder.prompt_builder import build_prompt
+from cv_builder.generate_cv import call_perplexity  
+from cv_builder.save import save_as_docx, save_as_pdf
 
 def get_work_experience_entries():
     entries = []
@@ -128,6 +127,17 @@ def main():
                 print("Unsupported file format. Please choose 'pdf' or 'docx'.")
     except Exception as e:
         print(f"Error generating CV: {e}")
+
+def generate_cv_from_data(user_data, workflow, has_work_exp=None):
+    if workflow == "new":
+        if has_work_exp not in ("yes", "no"):
+            raise ValueError("Invalid has_work_exp value")    
+    elif workflow == "existing": pass
+    else: raise ValueError("Invalid workflow choice")
+    
+    prompt = build_prompt(user_data, has_work_exp)
+    generated_cv = call_perplexity(prompt)
+    return generated_cv
 
 if __name__ == "__main__":
     main()

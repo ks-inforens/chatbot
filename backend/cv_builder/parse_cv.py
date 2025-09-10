@@ -1,6 +1,7 @@
 import re
 from docx import Document
 import pdfplumber
+from cv_builder.generate_cv import call_perplexity
 
 #extract text from pdf
 def extract_info_from_pdf(file_path):
@@ -16,44 +17,85 @@ def extract_info_from_docx(file_path):
 
 #extract required data from extracted text
 def extract_info_from_text(text):
-    info = {}
+    prompt = f"""
+                Given this heap of text collected from an existing uploaded CV:\n{text}\n\n
+                Can you return a clearly structured json resopnse such that the jsonify(your_output) function can be used to convert your response to a proper json object. Include fields in this format:\n
+                full_name: full name of the user\n
+                email: user email\n
+                phone: user phone number in country code format (e.g. +44 ... for UK)\n
+                linkedin: user's linkedIn URL\n
+                location: user's location in the format City, Country (e.g. London, UK)\n
+                work_experience: this should be an array of dictionaries contaning these following fields\n
+                -> type_of_work: out of 3 options - internship, part-time or full-time\n
+                -> job_title: the title of the job (e.g. Product Manager)\n
+                -> company_name: the name of the company they worked for\n
+                -> start_date: when they started work in mm/dd/yyyy format\n
+                -> end_date: when they ended work in mm/dd/yyyy format or 'Present' for still working\n 
+                -> responsibilities: list of roles or responsibilities they had in the job (separated by commahs)\n 
+                -> achievements: list of achievements or accomplishments within the job (separated by commahs)\n
+                education: this should be an array of dictionaries containing these following fields\n
+                -> university_name: name of school/university they received the qualification/degree from\n
+                -> start_date: when they started their education in that specific institution in mm/dd/yyyy format\n
+                -> end_date: when they ended their education in that specific institution in mm/dd/yyyy format or 'Present' for still studying\n
+                -> relevant_coursework: name of the degree or coursework included within the qualification\n
+                -> achievements: results of the qualification\n
+                skills: this should be a single dictionary containing these following fields\n
+                -> technical_skills: list of technical skills separated by a commah (e.g. Java, Python, C++)\n
+                -> soft_skills: list of soft skills separated by a commah (e.g. Communication, Teamwork)\n
+                languages_known: this should be a list of dictionaries containing these following fields\n
+                -> language: the name of the language (e.g. French)
+                -> proficiency: the proficiency given these fixed 4 options - 'Beginner', 'Intermediate', 'Advanced', 'Native'\n
+                certifications: this should be a list of dictionaries with these following fields\n
+                -> name: name of the certification\n
+                -> organisation: name of the issuing organisation of the certification\n
+                -> date: the date they obtained the certification in mm/dd/yyyy format\n
+                projects: this should be a list of dictionaries with these following fields\n
+                -> title: the name/title of the project\n
+                -> link: the URL link to the project in https:// format\n
+                -> description: a short description of the project\n\n
+                If any of the fields are missing, assign the field with a 'null' value.\n
+                Strictly start and end the response with a curly bracket, do not include any other characters or text in the start or end.
+            """
+    
+    return call_perplexity(prompt)
+    # info = {}
 
-    #normalize text for easier parsing
-    text = text.replace("\r", "\n") #replace \r with \n
-    lines = [line.strip() for line in text.split("\n") if line.strip()] #make the text clean and easy for machine to understand
-    full_text = "\n".join(lines)
+    # #normalize text for easier parsing
+    # text = text.replace("\r", "\n") #replace \r with \n
+    # lines = [line.strip() for line in text.split("\n") if line.strip()] #make the text clean and easy for machine to understand
+    # full_text = "\n".join(lines)
 
-    #personal info
-    info['full_name'] = lines[0] if lines else "" #first line is name
-    info['email'] = extract_regex(r"[\w\.-]+@[\w\.-]+", full_text) #extract email address using regular expression example@example.com
-    info['phone'] = extract_regex(r"\+?\d[\d\s\-\(\)]{7,}", full_text) #extract phone number using regular expression formats like "+" "(123)" "123-456"
-    info['linkedin'] = extract_regex(r"(https?://(www\.)?linkedin\.com/[^\s]+)", full_text) #extract linkedin url
-    info['location'] = extract_location(lines)
+    # #personal info
+    # info['full_name'] = lines[0] if lines else "" #first line is name
+    # info['email'] = extract_regex(r"[\w\.-]+@[\w\.-]+", full_text) #extract email address using regular expression example@example.com
+    # info['phone'] = extract_regex(r"\+?\d[\d\s\-\(\)]{7,}", full_text) #extract phone number using regular expression formats like "+" "(123)" "123-456"
+    # info['linkedin'] = extract_regex(r"(https?://(www\.)?linkedin\.com/[^\s]+)", full_text) #extract linkedin url
+    # info['location'] = extract_location(lines)
 
-    #parse sections
-    sections = split_into_sections(full_text)
+    # #parse sections
+    # sections = split_into_sections(full_text)
 
-    #workex
-    work_exp_text = sections.get("work experience", "") or sections.get("experience", "") #sections is a dict, get work experience from that
-    info['work_experience'] = parse_work_experience(work_exp_text)
+    # #workex
+    # work_exp_text = sections.get("work experience", "") or sections.get("experience", "") #sections is a dict, get work experience from that
+    # info['work_experience'] = parse_work_experience(work_exp_text)
 
-    #education
-    education_text = sections.get("education", "")
-    info['education'] = parse_education(education_text)
+    # #education
+    # education_text = sections.get("education", "")
+    # info['education'] = parse_education(education_text)
 
-    #skills
-    skills_text = sections.get("skills", "")
-    info['skills'] = parse_skills(skills_text)
+    # #skills
+    # skills_text = sections.get("skills", "")
+    # info['skills'] = parse_skills(skills_text)
 
-    #Projects
-    projects_text = sections.get("projects", "")
-    info['projects'] = parse_projects(projects_text)
+    # #Projects
+    # projects_text = sections.get("projects", "")
+    # info['projects'] = parse_projects(projects_text)
 
-    #certificates and Awards
-    certs_text = sections.get("certificates and awards", "") or sections.get("certifications", "")
-    info['certificates'] = parse_certificates(certs_text)
+    # #certificates and Awards
+    # certs_text = sections.get("certificates and awards", "") or sections.get("certifications", "")
+    # info['certificates'] = parse_certificates(certs_text)
 
-    return info
+    # return info
 
 def extract_regex(pattern, text, group=0):
     match = re.findall(pattern, text, re.IGNORECASE)

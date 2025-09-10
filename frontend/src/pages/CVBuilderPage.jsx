@@ -13,33 +13,27 @@ const downloadFile = (blob, filename) => {
     link.remove();
 };
 
-export default function SOPBuilderPage() {
+export default function CVBuilderPage() {
     const [form, setForm] = useState({
-        name: "",
-        countryOfOrigin: "",
-        intendedDegree: "",
-        preferredCountryOfStudy: "",
-        preferredFieldOfStudy: "",
-        preferredUniversity: "",
-        wordCountTarget: "",
-        tone: "Formal",
-        keySkills: "",
-        degree: "",
-        qualificationUniversity: "",
-        graduationYear: "",
-        relevantSubjects: "",
-        strengths: "",
-        whyFieldOfStudy: "",
-        whyUniversity: "",
-        projectsResearch: "",
-        awards: "",
-        longTermGoals: "",
-        hobbies: "",
-        challenge: "",
+        fullName: "",
+        targetCountry: "",
+        cvLength: "",
+        style: "",
+        email: "",
+        phone: "",
+        linkedin: "",
+        location: "",
+        workExperience: [],
+        education: [],
+        technicalSkills: "",
+        softSkills: "",
+        languagesKnown: [],
+        skills: [],
+        certificates: [],
+        projects: [],
     });
 
     const [step, setStep] = useState(1);
-    const [sopResult, setSopResult] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -49,34 +43,27 @@ export default function SOPBuilderPage() {
     const handleSubmit = async () => {
         setLoading(true);
         setError("");
-        setSopResult("");
-
-        const payload = {
-            name: form.name,
-            country_of_origin: form.countryOfOrigin,
-            intended_degree: form.intendedDegree,
-            preferred_country: form.preferredCountryOfStudy,
-            field_of_study: form.preferredFieldOfStudy,
-            preferred_uni: form.preferredUniversity,
-            word_count_target: form.wordCountTarget,
-            tone: form.tone,
-            key_skills: form.keySkills,
-            degree: form.degree,
-            qualification_university: form.qualificationUniversity,
-            graduation_year: form.graduationYear,
-            relevant_subjects: form.relevantSubjects,
-            strengths: form.strengths,
-            why_field: form.whyFieldOfStudy,
-            why_uni: form.whyUniversity,
-            projects: form.projectsResearch,
-            awards: form.awards,
-            goals: form.longTermGoals,
-            hobbies: form.hobbies,
-            challenge: form.challenge,
-        };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/sop`, {
+            const payload = {
+                workflow: "new",
+                has_work_exp: form.workExperience ? "yes" : "no",
+                full_name: form.fullName,
+                target_country: form.targetCountry,
+                cv_length: form.cvLength,
+                style: form.style,
+                email: form.email,
+                phone: form.phone,
+                linkedin: form.linkedin,
+                location: form.location,
+                work_experience: form.workExperience,
+                education: form.education,
+                skills: form.skills,
+                certificates: form.certificates,
+                projects: form.projects,
+            };
+
+            const response = await fetch(`${API_BASE_URL}/cv/download/pdf`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -84,12 +71,10 @@ export default function SOPBuilderPage() {
                 body: JSON.stringify(payload),
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-                setError(data.error || "Failed to generate SOP.");
+                const data = await response.json();
+                setError(data.error || "Failed to generate CV.");
             } else {
-                setSopResult(data.sop);
                 setStep(3);
             }
         } catch (e) {
@@ -100,14 +85,30 @@ export default function SOPBuilderPage() {
     };
 
     const handleDownloadPDF = async () => {
-        if (!sopResult) return;
         setError("");
-
         try {
-            const response = await fetch(`${API_BASE_URL}/sop/download/pdf`, {
+            const payload = {
+                workflow: "new",
+                has_work_exp: form.workExperience ? "yes" : "no",
+                full_name: form.fullName,
+                target_country: form.targetCountry,
+                cv_length: form.cvLength,
+                style: form.style,
+                email: form.email,
+                phone: form.phone,
+                linkedin: form.linkedin,
+                location: form.location,
+                work_experience: form.workExperience,
+                education: form.education,
+                skills: form.skills,
+                certificates: form.certificates,
+                projects: form.projects,
+            };
+
+            const response = await fetch(`${API_BASE_URL}/cv/download/pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sop: sopResult }),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -117,21 +118,37 @@ export default function SOPBuilderPage() {
             }
 
             const blob = await response.blob();
-            downloadFile(blob, "SOP.pdf");
+            downloadFile(blob, "CV.pdf");
         } catch (e) {
             setError("Network error: " + e.message);
         }
     };
 
     const handleDownloadDOCX = async () => {
-        if (!sopResult) return;
         setError("");
-
         try {
-            const response = await fetch(`${API_BASE_URL}/sop/download/docx`, {
+            const payload = {
+                workflow: "new",
+                has_work_exp: form.workExperience ? "yes" : "no",
+                full_name: form.fullName,
+                target_country: form.targetCountry,
+                cv_length: form.cvLength,
+                style: form.style,
+                email: form.email,
+                phone: form.phone,
+                linkedin: form.linkedin,
+                location: form.location,
+                work_experience: form.workExperience,
+                education: form.education,
+                skills: form.skills,
+                certificates: form.certificates,
+                projects: form.projects,
+            };
+
+            const response = await fetch(`${API_BASE_URL}/cv/download/docx`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sop: sopResult }),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -141,7 +158,7 @@ export default function SOPBuilderPage() {
             }
 
             const blob = await response.blob();
-            downloadFile(blob, "SOP.docx");
+            downloadFile(blob, "CV.docx");
         } catch (e) {
             setError("Network error: " + e.message);
         }
@@ -150,16 +167,13 @@ export default function SOPBuilderPage() {
     if (loading) {
         return (
             <div className="w-full px-8 py-4 fadeIn">
-                <h1 className="text-3xl mb-2">Personalised SOP Builder</h1>
+                <h1 className="text-3xl mb-2">CV Builder</h1>
                 <p className="w-full text-sm text-black/50 pb-4 mb-6 border-b border-black/10">
-                    Share your story in detail - we'll craft it into a standout SOP
+                    Building your winning CV, please wait...
                 </p>
                 <div className="flex flex-col gap-4 items-center justify-center py-32">
                     <Search className="text-orange-700" />
-                    <p className="text-black/60 text-center text-md">
-                        Crafting the perfect SOP for you. <br />
-                        Just a sec!
-                    </p>
+                    <p className="text-black/60 text-center text-md">Crafting the perfect CV for you. Just a sec!</p>
                 </div>
             </div>
         );
@@ -177,18 +191,17 @@ export default function SOPBuilderPage() {
                             Your PATH to a winning CV!
                         </p>
                     </div>
-                    {error && <p className="text-red-600 mb-4"></p>}
+                    {error && <p className="text-red-600 mb-4">{error}</p>}
                     <div className="w-full flex gap-4 mb-4">
                         <button
                             onClick={() => {
                                 setStep(1);
-                                setSopResult("");
                                 setError("");
                             }}
                             className="text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-black/5 rounded-2xl hover:bg-black/10 cursor-pointer"
                         >
                             <WandSparkles className="inline w-5 h-5" />
-                            Regenerate SOP
+                            Regenerate CV
                         </button>
                         <button
                             onClick={handleDownloadPDF}
@@ -205,7 +218,6 @@ export default function SOPBuilderPage() {
                             Download as DOCX
                         </button>
                     </div>
-                    <p className="whitespace-pre-wrap text-justify text-black/80 text-sm max-w-[80vw] px-2">{sopResult}</p>
                 </div>
             )}
         </div>

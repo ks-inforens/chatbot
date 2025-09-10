@@ -1,45 +1,172 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import SearchDropdown from "./SearchDropdown";
 import { Upload } from "lucide-react";
-
-const countries = ["India", "United States", "United Kingdom", "Australia", "Canada"];
-const cvLengths = ["1 Page", "2 Pages"];
-const cvStyles = ["Formal", "Modern", "Creative", "Minimalist", "ATS-friendly", "Custom"];
-const workTypes = ["Internship", "Part-Time", "Full-Time"];
-const languages = ["English", "Spanish", "French", "Mandarin", "Hindi", "Arabic"];
-const proficiencyLevels = ["Beginner", "Intermediate", "Advanced", "Native"];
-const technicalSkills = ["JavaScript", "Python", "Java", "C++", "React", "Node.js", "CSS", "SQL"];
-const softSkills = ["Communication", "Leadership", "Teamwork", "Creativity", "Adaptability"];
+import { cvOptions as options } from "../data/cvBuilderData";
+import { API_BASE_URL } from "../data/api";
+import axios from "axios";
 
 export default function CVBuilderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
     const [openDropdown, setOpenDropdown] = useState(null);
     const [countrySearch, setCountrySearch] = useState("");
-    const [selectedCountries, setSelectedCountries] = useState([]);
     const [techSearch, setTechSearch] = useState("");
     const [softSearch, setSoftSearch] = useState("");
+    const uploadRef = useRef(null);
+    const [file, setFile] = useState(null);
+    const [parsedData, setParsedData] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    const filteredCountries = countries.filter(c =>
+    const fileUrl = file ? URL.createObjectURL(file) : null;
+
+    // Auto-populate form when parsedData is available
+    useEffect(() => {
+        if (parsedData) {
+            const updatedForm = { ...form };
+
+            // Basic contact information
+            if (parsedData.full_name) updatedForm.fullName = parsedData.full_name;
+            if (parsedData.email) updatedForm.email = parsedData.email;
+            if (parsedData.phone) updatedForm.phone = parsedData.phone;
+            if (parsedData.linkedin) updatedForm.linkedInURL = parsedData.linkedin;
+            if (parsedData.location) updatedForm.location = parsedData.location;
+
+            // Work Experience
+            if (parsedData.work_experience && parsedData.work_experience.length > 0) {
+                updatedForm.workExperience = parsedData.work_experience.map(exp => ({
+                    type: exp.type_of_work || '',
+                    jobTitle: exp.job_title || '',
+                    companyName: exp.company_name || '',
+                    startDate: exp.start_date ? formatDateForInput(exp.start_date) : '',
+                    endDate: exp.end_date && exp.end_date !== 'Present' ? formatDateForInput(exp.end_date) : '',
+                    responsibilities: Array.isArray(exp.responsibilities) ? exp.responsibilities.join('\n• ') : exp.responsibilities || '',
+                    achievements: Array.isArray(exp.achievements) ? exp.achievements.join('\n• ') : exp.achievements || '',
+                }));
+            }
+
+            // Education
+            if (parsedData.education && parsedData.education.length > 0) {
+                updatedForm.education = parsedData.education.map(edu => ({
+                    universityName: edu.university_name || '',
+                    startDate: edu.start_date ? formatDateForInput(edu.start_date) : '',
+                    endDate: edu.end_date ? formatDateForInput(edu.end_date) : '',
+                    coursework: edu.relevant_coursework || '',
+                    achievements: Array.isArray(edu.achievements) ? edu.achievements.join('\n• ') : edu.achievements || '',
+                }));
+            }
+
+            // Skills
+            if (parsedData.skills) {
+                if (parsedData.skills.technical_skills) {
+                    const techSkills = typeof parsedData.skills.technical_skills === 'string'
+                        ? parsedData.skills.technical_skills.split(',').map(skill => skill.trim())
+                        : parsedData.skills.technical_skills;
+                    updatedForm.technicalSkills = techSkills;
+                }
+                if (parsedData.skills.soft_skills) {
+                    const softSkills = typeof parsedData.skills.soft_skills === 'string'
+                        ? parsedData.skills.soft_skills.split(',').map(skill => skill.trim())
+                        : parsedData.skills.soft_skills;
+                    updatedForm.softSkills = softSkills;
+                }
+            }
+
+            // Languages
+            if (parsedData.languages_known && parsedData.languages_known.length > 0) {
+                updatedForm.languagesKnown = parsedData.languages_known.map(lang => ({
+                    language: lang.language || '',
+                    proficiency: lang.proficiency || '',
+                }));
+            }
+
+            // Certifications
+            if (parsedData.certifications && parsedData.certifications.length > 0) {
+                updatedForm.certificates = parsedData.certifications.map(cert => ({
+                    name: cert.name || cert.title || '',
+                    organization: cert.organization || cert.issuer || '',
+                    dateObtained: cert.date_obtained || cert.date ? formatDateForInput(cert.date_obtained || cert.date) : '',
+                }));
+            }
+
+            // Projects
+            if (parsedData.projects && parsedData.projects.length > 0) {
+                updatedForm.projects = parsedData.projects.map(proj => ({
+                    title: proj.title || '',
+                    link: proj.link || '',
+                    description: proj.description || '',
+                }));
+            }
+
+            setForm(updatedForm);
+        }
+    }, [parsedData, setForm]);
+
+    // Helper function to format dates for input fields
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+
+        // Handle different date formats
+        const date = new Date(dateString);
+        if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // Handle MM/DD/YYYY format
+        if (dateString.includes('/')) {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                const [month, day, year] = parts;
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+        }
+
+        return '';
+    };
+
+    const handleUploadClick = () => {
+        uploadRef.current.click();
+        setParsedData(null);
+    };
+
+    const handleFileChange = (event) => {
+        const fileList = event.target.files;
+        if (fileList && fileList.length > 0) {
+            const file = fileList[0];
+            setFile(file);
+        } else {
+            setFile(null);
+        }
+    };
+
+    const handleUploadFile = async () => {
+        setLoading(true);
+        if (!file) return;
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await axios.post(`${API_BASE_URL}/upload-cv`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            setParsedData(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Upload error:", error);
+        }
+    };
+
+    const filteredCountries = options["countries"].filter(c =>
         c.toLowerCase().includes(countrySearch.toLowerCase())
     );
 
-    const filteredTechSkills = technicalSkills.filter(skill =>
+    const filteredTechSkills = options["technicalSkills"].filter(skill =>
         skill.toLowerCase().includes(techSearch.toLowerCase())
     );
 
-    const filteredSoftSkills = softSkills.filter(skill =>
+    const filteredSoftSkills = options["softSkills"].filter(skill =>
         skill.toLowerCase().includes(softSearch.toLowerCase())
     );
-
-    const selectedCountriesLabel = selectedCountries.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-            {selectedCountries.map(c => (
-                <span key={c} className="bg-orange-100 border border-orange-300/40 text-black/80 text-xs px-3 py-1 rounded-full">
-                    {c}
-                </span>
-            ))}
-        </div>
-    ) : "Select";
 
     const toggleDropdown = (name) => {
         setOpenDropdown(openDropdown === name ? null : name);
@@ -66,12 +193,6 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
     const handleSelect = (name, value) => {
         setForm(prev => ({ ...prev, [name]: value }));
         setOpenDropdown(null);
-    };
-
-    const handleMultiToggle = (id) => {
-        setSelectedCountries(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        );
     };
 
     const handleLinkChange = (index, value) => {
@@ -150,10 +271,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
             "fullName",
             "email",
             "phone",
-            "location",
-            "cvLength",
-            "preferredCountry",
-            "preferredField"
+            "targetCountry"
         ];
         for (let field of requiredFields) {
             if (!form[field] || form[field].toString().trim() === "") {
@@ -171,12 +289,51 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
             <p className="w-full text-sm text-black/50 pb-4 mb-4 border-b border-black/10">
                 Your PATH to a winning CV!
             </p>
-            <button
-                className="mb-6 text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-black/5 rounded-2xl hover:bg-black/10 cursor-pointer"
-            >
-                <Upload className="inline w-5 h-5" />
-                Upload CV
-            </button>
+            <h1 className="mb-2">Already have an exisiting CV?</h1>
+            <div className="flex gap-2 items-center mb-6">
+                <button
+                    type="button"
+                    onClick={handleUploadClick}
+                    className="text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-black/5 rounded-2xl hover:bg-black/10 cursor-pointer"
+                >
+                    <Upload className="inline w-5 h-5" />
+                    {!file ? "Upload CV" : "Replace File"}
+                </button>
+                <input
+                    ref={uploadRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    style={{ display: "none" }}
+                    onChange={handleFileChange}
+                />
+                {file && !parsedData && (
+                    <div className="flex gap-2">
+                        <a
+                            href={fileUrl}
+                            download={file.name}
+                            className="text-xs py-3 md:py-0 min-h-8 px-4 rounded-full flex gap-1 items-center bg-black/5 hover:bg-black/10 text-black/80"
+                        >
+                            Selected:<span className="text-orange-800 underline">{file.name}</span>
+                        </a>
+                        <button onClick={handleUploadFile} className="text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-orange-400/15 hover:bg-orange-400/20 rounded-full cursor-pointer">
+                            {!loading ? (
+                                "Analyse CV"
+                            ) : "Analyzing..."
+                            }
+                        </button>
+
+                    </div>
+                )}
+
+                {parsedData && (
+                    <div className="flex items-center px-4 py-3 md:py-0 min-h-8 bg-green-300/10 rounded-full fadeIn">
+                        <p className="text-xs text-green-800">
+                            ✓ CV successfully analyzed! You can now review and edit the information below.
+                        </p>
+                    </div>
+                )}
+            </div>
+
             <form onSubmit={handleSubmit}>
                 <div className="md:grid md:grid-cols-3 md:gap-6">
                     <div className="flex flex-col gap-2">
@@ -184,17 +341,16 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                             Target Country<span className="text-orange-600">*</span>
                         </label>
                         <SearchDropdown
-                            label={selectedCountriesLabel}
-                            count={selectedCountries.length}
+                            label={form.targetCountry || "Select"}
                             isOpen={openDropdown === "targetCountry"}
                             onToggle={() => toggleDropdown("targetCountry")}
                             searchable
-                            multiSelect
+                            multiSelect={false}
                             searchValue={countrySearch}
                             onSearchChange={e => setCountrySearch(e.target.value)}
                             options={filteredCountries.map(c => ({ id: c, name: c }))}
-                            selectedOptions={selectedCountries}
-                            onOptionToggle={handleMultiToggle}
+                            selectedOptions={form.targetCountry ? [form.targetCountry] : []}
+                            onOptionToggle={id => handleSelect("targetCountry", id)}
                             className="mb-6"
                         />
                     </div>
@@ -209,7 +365,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                             onToggle={() => toggleDropdown("cvLength")}
                             searchable={false}
                             multiSelect={false}
-                            options={cvLengths.map(c => ({ id: c, name: c }))}
+                            options={options["cvLengths"].map(c => ({ id: c, name: c }))}
                             selectedOptions={form.cvLength ? [form.cvLength] : []}
                             onOptionToggle={id => handleSelect("cvLength", id)}
                             className="mb-6"
@@ -228,7 +384,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                             onToggle={() => toggleDropdown("cvStyle")}
                             searchable={false}
                             multiSelect={false}
-                            options={cvStyles.map(c => ({ id: c, name: c }))}
+                            options={options["cvStyles"].map(c => ({ id: c, name: c }))}
                             selectedOptions={form.cvStyle ? [form.cvStyle] : []}
                             onOptionToggle={id => handleSelect("cvStyle", id)}
                             className="mb-6"
@@ -269,15 +425,15 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                     <label className="text-sm mb-1">Phone Number<span className="text-orange-600">*</span></label>
                                     <input
                                         type="tel"
-                                        name="phoneNumber"
-                                        value={form.phoneNumber || ""}
+                                        name="phone"
+                                        value={form.phone || ""}
                                         onChange={handleChange}
                                         placeholder="+1234567890"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-sm mb-1">Location<span className="text-orange-600">*</span></label>
+                                    <label className="text-sm mb-1">Location</label>
                                     <input
                                         type="text"
                                         name="location"
@@ -330,16 +486,16 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                     <div>
                         {
                             (form.workExperience || []).map((w, i) => (
-                                <div className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
+                                <div key={i} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
                                     <div className="flex justify-end absolute top-2 right-2">
                                         <button type="button" onClick={() => removeWorkExperience(i)} className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">Remove</button>
                                     </div>
-                                    <div key={i} className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
                                         <div className="flex flex-col gap-2">
                                             <label className="text-sm mb-1">Type of Work<span className="text-orange-600">*</span></label>
                                             <select value={w.type} onChange={e => updateWorkExperience(i, "type", e.target.value)} className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg">
                                                 <option value="">Type of Work</option>
-                                                {workTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                                                {options["workTypes"].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
                                         <div className="flex flex-col gap-2">
@@ -468,11 +624,11 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                     <div className="md:grid md:grid-cols-2 md:gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
-                                Technical Skills<span className="text-orange-600">*</span>
+                                Technical Skills
                             </label>
                             <SearchDropdown
                                 label={form.technicalSkills && form.technicalSkills.length > 0
-                                    ? form.technicalSkills.join(", ") + ","
+                                    ? form.technicalSkills.join(", ")
                                     : "Select Technical Skills"}
                                 count={form.technicalSkills ? form.technicalSkills.length : 0}
                                 isOpen={openDropdown === "technicalSkills"}
@@ -489,11 +645,11 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
-                                Soft Skills<span className="text-orange-600">*</span>
+                                Soft Skills
                             </label>
                             <SearchDropdown
                                 label={form.softSkills && form.softSkills.length > 0
-                                    ? form.softSkills.join(", ") + ","
+                                    ? form.softSkills.join(", ")
                                     : "Select Soft Skills"}
                                 count={form.softSkills ? form.softSkills.length : 0}
                                 isOpen={openDropdown === "softSkills"}
@@ -511,7 +667,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                         {/* Languages Known */}
                         <div className="space-y-2">
                             <label className="text-sm px-2 mb-1">
-                                Languages Known<span className="text-orange-600">*</span>
+                                Languages Known
                             </label>
                             <div className="flex flex-col">
                                 {(form.languagesKnown || []).map((lang, idx) => (
@@ -520,14 +676,14 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             name={`language-${idx}`}
                                             value={lang.language || ""}
                                             onChange={(e) => {
-                                                const languagesKnown = [...form.languagesKnown];
+                                                const languagesKnown = [...(form.languagesKnown || [])];
                                                 languagesKnown[idx] = { ...languagesKnown[idx], language: e.target.value };
                                                 setForm((prev) => ({ ...prev, languagesKnown }));
                                             }}
                                             className="text-xs h-10 px-2 border border-orange-800/25 rounded-lg"
                                         >
                                             <option value="">Select Language</option>
-                                            {languages.map((l) => (
+                                            {options["languages"].map((l) => (
                                                 <option key={l} value={l}>{l}</option>
                                             ))}
                                         </select>
@@ -535,21 +691,21 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             name={`proficiency-${idx}`}
                                             value={lang.proficiency || ""}
                                             onChange={(e) => {
-                                                const languagesKnown = [...form.languagesKnown];
+                                                const languagesKnown = [...(form.languagesKnown || [])];
                                                 languagesKnown[idx] = { ...languagesKnown[idx], proficiency: e.target.value };
                                                 setForm((prev) => ({ ...prev, languagesKnown }));
                                             }}
                                             className="text-xs h-10 px-2 border border-orange-800/25 rounded-lg"
                                         >
                                             <option value="">Select Proficiency</option>
-                                            {proficiencyLevels.map((p) => (
+                                            {options["proficiencyLevels"].map((p) => (
                                                 <option key={p} value={p}>{p}</option>
                                             ))}
                                         </select>
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                const languagesKnown = [...form.languagesKnown];
+                                                const languagesKnown = [...(form.languagesKnown || [])];
                                                 languagesKnown.splice(idx, 1);
                                                 setForm((prev) => ({ ...prev, languagesKnown }));
                                             }}
@@ -584,7 +740,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const updated = [...form.certificates];
+                                            const updated = [...(form.certificates || [])];
                                             updated.splice(idx, 1);
                                             setForm((prev) => ({ ...prev, certificates: updated }));
                                         }}
@@ -604,7 +760,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             value={cert.name || ""}
                                             placeholder="Certificate Name"
                                             onChange={e => {
-                                                const updated = [...form.certificates];
+                                                const updated = [...(form.certificates || [])];
                                                 updated[idx] = { ...updated[idx], name: e.target.value };
                                                 setForm(prev => ({ ...prev, certificates: updated }));
                                             }}
@@ -621,7 +777,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             value={cert.organization || ""}
                                             placeholder="Issuing Organization"
                                             onChange={e => {
-                                                const updated = [...form.certificates];
+                                                const updated = [...(form.certificates || [])];
                                                 updated[idx] = { ...updated[idx], organization: e.target.value };
                                                 setForm(prev => ({ ...prev, certificates: updated }));
                                             }}
@@ -637,7 +793,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             name="dateObtained"
                                             value={cert.dateObtained || ""}
                                             onChange={e => {
-                                                const updated = [...form.certificates];
+                                                const updated = [...(form.certificates || [])];
                                                 updated[idx] = { ...updated[idx], dateObtained: e.target.value };
                                                 setForm(prev => ({ ...prev, certificates: updated }));
                                             }}
@@ -672,7 +828,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            const updated = [...form.projects];
+                                            const updated = [...(form.projects || [])];
                                             updated.splice(idx, 1);
                                             setForm((prev) => ({ ...prev, projects: updated }));
                                         }}
@@ -692,7 +848,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             value={proj.title || ""}
                                             placeholder="Project Title"
                                             onChange={e => {
-                                                const updated = [...form.projects];
+                                                const updated = [...(form.projects || [])];
                                                 updated[idx] = { ...updated[idx], title: e.target.value };
                                                 setForm(prev => ({ ...prev, projects: updated }));
                                             }}
@@ -707,7 +863,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                             value={proj.link || ""}
                                             placeholder="Project Link (Optional)"
                                             onChange={e => {
-                                                const updated = [...form.projects];
+                                                const updated = [...(form.projects || [])];
                                                 updated[idx] = { ...updated[idx], link: e.target.value };
                                                 setForm(prev => ({ ...prev, projects: updated }));
                                             }}
@@ -725,7 +881,7 @@ export default function CVBuilderForm({ form, setForm, onNext }) {
                                         rows={3}
                                         placeholder="Project Description"
                                         onChange={e => {
-                                            const updated = [...form.projects];
+                                            const updated = [...(form.projects || [])];
                                             updated[idx] = { ...updated[idx], description: e.target.value };
                                             setForm(prev => ({ ...prev, projects: updated }));
                                         }}
