@@ -24,6 +24,7 @@ def build_prompt(data, has_work_exp=None):
     prompt += f"\nCertificates and Awards: {data.get('certificates') or 'N/A'}"
     prompt += f"\nProjects: {data.get('projects') or 'N/A'}"
 
+    #if they have part-time or internship -> below education section, if full-time -> above education section
     #add both sections if available, regardless of has_work_exp (for existing workflow)
     if data.get("work_experience"):
         prompt += f"\nWork Experience: {data['work_experience']}"

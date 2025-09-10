@@ -1,8 +1,12 @@
 from flask import Blueprint, request, jsonify, current_app, send_file
+from werkzeug.utils import secure_filename
 from models import db, Query  
 from chatbot.chatbot import PerplexityChatbot
 from scholarship_finder.scholarship import build_prompt, fetch_scholarships
 from sop_builder.sop_builder import generate_sop, save_pdf, save_docx
+from cv_builder.main import generate_cv_from_data
+from cv_builder.save import save_as_docx, save_as_pdf  
+from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx
 import requests
 import time
 import json
@@ -12,6 +16,11 @@ import os
 bp = Blueprint('api', __name__, url_prefix='/api')
 
 bot = None
+
+ALLOWED_EXTENSIONS = {'pdf', 'docx'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.before_app_request
 def create_chatbot():
@@ -161,7 +170,7 @@ def sop():
         return jsonify({"error": str(e)}), 500
     
 @bp.route("/sop/download/pdf", methods=["POST"])
-def download_pdf():
+def sop_download_pdf():
     try:
         data = request.get_json()
         sop_text = data.get("sop")
@@ -193,7 +202,7 @@ def download_pdf():
         return {"error": str(e)}, 500
 
 @bp.route("/sop/download/docx", methods=["POST"])
-def download_docx():
+def sop_download_docx():
     try:
         data = request.get_json()
         sop_text = data.get("sop")
@@ -223,3 +232,137 @@ def download_docx():
     except Exception as e:
         current_app.logger.error(f"Error in /sop/download/docx: {e}")
         return {"error": str(e)}, 500
+
+@bp.route("/cv/download/docx", methods=["POST"])
+def cv_download_docx():
+    try:
+        data = request.get_json()
+        if not data:
+            return {"error": "JSON body required"}, 400
+
+        workflow = data.get("workflow")
+        if not workflow:
+            return {"error": "workflow field is required"}, 400
+
+        has_work_exp = data.get("has_work_exp", None)
+        user_data = _extract_user_data(data, workflow)
+
+        generated_cv = generate_cv_from_data(user_data, workflow, has_work_exp)
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
+        tmp.close()
+        save_as_docx(generated_cv, tmp.name)
+
+        response = send_file(
+            tmp.name,
+            as_attachment=True,
+            download_name="Generated_CV.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+
+        @response.call_on_close
+        def cleanup():
+            try:
+                os.unlink(tmp.name)
+            except Exception:
+                current_app.logger.warning(f"Failed to delete temp file: {tmp.name}")
+
+        return response
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /cv/download/docx: {e}")
+        return {"error": str(e)}, 500
+
+@bp.route("/cv/download/pdf", methods=["POST"])
+def cv_download_pdf():
+    try:
+        data = request.get_json()
+        if not data:
+            return {"error": "JSON body required"}, 400
+
+        workflow = data.get("workflow")
+        if not workflow:
+            return {"error": "workflow field is required"}, 400
+
+        has_work_exp = data.get("has_work_exp", None)
+        user_data = _extract_user_data(data, workflow)
+
+        generated_cv = generate_cv_from_data(user_data, workflow, has_work_exp)
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        tmp.close()
+        save_as_pdf(generated_cv, tmp.name)
+
+        response = send_file(
+            tmp.name,
+            as_attachment=True,
+            download_name="Generated_CV.pdf",
+            mimetype="application/pdf"
+        )
+
+        @response.call_on_close
+        def cleanup():
+            try:
+                os.unlink(tmp.name)
+            except Exception:
+                current_app.logger.warning(f"Failed to delete temp file: {tmp.name}")
+
+        return response
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /cv/download/pdf: {e}")
+        return {"error": str(e)}, 500
+
+def _extract_user_data(data, workflow):
+    if workflow == "new":
+        return {
+            "full_name": data.get("full_name"),
+            "target_country": data.get("target_country"),
+            "cv_length": data.get("cv_length"),
+            "style": data.get("style"),
+            "email": data.get("email"),
+            "phone": data.get("phone"),
+            "linkedin": data.get("linkedin"),
+            "location": data.get("location"),
+            "work_experience": data.get("work_experience", ""),
+            "education": data.get("education", ""),
+            "skills": data.get("skills"),
+            "certificates": data.get("certificates"),
+            "projects": data.get("projects")
+        }
+    elif workflow == "existing":
+        user_data = data.get("user_data", {})
+        if not user_data:
+            raise ValueError("user_data is required for existing workflow")
+        return user_data
+    else:
+        raise ValueError("Invalid workflow")
+    
+@bp.route('/upload-cv', methods=['POST'])
+def upload_cv():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Unsupported file type"}), 400
+
+    filename = secure_filename(file.filename)
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', '/tmp/uploads')
+    os.makedirs(upload_folder, exist_ok=True)
+
+    file_path = os.path.join(upload_folder, filename)
+    file.save(file_path)
+
+    if filename.endswith('.pdf'):
+        info = extract_info_from_pdf(file_path)
+    else:
+        info = extract_info_from_docx(file_path)
+
+    print(info)
+
+    return jsonify(json.loads(info)), 200
