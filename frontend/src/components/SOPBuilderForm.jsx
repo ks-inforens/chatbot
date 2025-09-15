@@ -38,7 +38,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
             </p>
 
             <form className="flex flex-col gap-6">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 border-b pb-8 border-black/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-b pb-8 border-black/10">
                     {/* Left column */}
                     <div className="flex flex-col gap-6">
                         <div className="grid grid-cols-2 gap-6">
