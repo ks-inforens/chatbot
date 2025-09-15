@@ -1,8 +1,8 @@
 import sys
 from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx
-from cv_builder.prompt_builder import build_prompt
+from cv_builder.prompt_builder import build_prompt_CV
 from cv_builder.generate_cv import call_perplexity  
-from cv_builder.save import save_as_docx, save_as_pdf
+from cv_builder.save import save_as_docx
 
 def get_work_experience_entries():
     entries = []
@@ -119,9 +119,7 @@ def main():
         download_choice = input("\nDo you want to download the CV? (yes/no): ").strip().lower()
         if download_choice == "yes":
             file_type = input("Choose file format (pdf/docx): ").strip().lower()
-            if file_type == "pdf":
-                save_as_pdf(generated_cv)
-            elif file_type == "docx":
+            if file_type == "docx":
                 save_as_docx(generated_cv)
             else:
                 print("Unsupported file format. Please choose 'pdf' or 'docx'.")

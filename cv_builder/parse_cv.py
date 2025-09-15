@@ -52,7 +52,10 @@ def extract_info_from_text(text):
                 projects: this should be a list of dictionaries with these following fields\n
                 -> title: the name/title of the project\n
                 -> link: the URL link to the project in https:// format\n
-                -> description: a short description of the project\n\n
+                -> description: a short description of the project\n
+                additionalSec: this would be a list of dictionaries that you need to extract for additional sections that are useful for the CV build with these following fields\n
+                -> title: the name/title of the additional section\n
+                -> desc: a description of the key information relative to that section (could be results, achievements, responsibilities, etc) \n\n
                 If any of the fields are missing, assign the field with a 'null' value.\n
                 Strictly start and end the response with a curly bracket, do not include any other characters or text in the start or end.
             """
