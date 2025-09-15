@@ -1,102 +1,188 @@
+import json
 from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from fpdf import FPDF  
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_TAB_ALIGNMENT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+
+def add_bottom_border(paragraph):
+    """Add a horizontal line under section headers"""
+    p = paragraph._element
+    pPr = p.get_or_add_pPr()
+    pBdr = OxmlElement("w:pBdr")
+    bottom = OxmlElement("w:bottom")
+    bottom.set(qn("w:val"), "single")
+    bottom.set(qn("w:sz"), "12")  # thicker line
+    bottom.set(qn("w:space"), "0")
+    bottom.set(qn("w:color"), "000000")
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+
+def normalize_text(text):
+    if text.strip().startswith("```"):
+        text = text.strip().split("```")[1]
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    return text.strip()
+
 
 def save_as_docx(text, filename="generated_cv.docx"):
     doc = Document()
 
-    # Set base style
+    section = doc.sections[0]
+    section.top_margin = Inches(0.5)    
+    section.bottom_margin = Inches(0.5)  
+    section.left_margin = Inches(0.5) 
+    section.right_margin = Inches(0.5) 
+
     style = doc.styles['Normal']
     font = style.font
-    font.name = 'Arial'
-    font.size = Pt(11)
+    font.name = 'Times New Roman'
+    font.size = Pt(10)
+    style.paragraph_format.space_after = Pt(4)
 
-    lines = text.split('\n')
-    first_line = True
+    try:
+        data = json.loads(normalize_text(text))
+        is_json = True
+    except:
+        is_json = False
 
-    for line in lines:
-        line = line.strip()
-        if not line:
-            doc.add_paragraph()
-            continue
+    if is_json:
+        # === Name ===
+        para = doc.add_paragraph()
+        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = para.add_run(data.get("full_name",""))
+        run.bold = True
+        run.font.size = Pt(16)
 
-        # Center-align first line as name
-        if first_line:
+        # === Location ===
+        location = data.get("contact", {}).get("location", "")
+        if location:
             para = doc.add_paragraph()
             para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            run = para.add_run(line)
-            run.bold = True
-            run.font.size = Pt(16)
-            first_line = False
-            continue
+            run = para.add_run(location)
+            run.font.size = Pt(10)
 
-        # Section Headings (lines starting with ##)
-        if line.startswith("## "):
-            section_title = line.replace("##", "").strip()
+        # === Contact info ===
+        para = doc.add_paragraph()
+        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        contact = data.get("contact", {})
+        contact_items = []
+        if contact.get("email"):
+            contact_items.append(contact['email'])
+        if contact.get("phone"):
+            contact_items.append(contact['phone'])
+        if contact.get("linkedin"):
+            contact_items.append(contact['linkedin'])
+        para.add_run(" | ".join(contact_items))
+
+        # === Sections ===
+        sections = data.get("sections", {})
+        for section, content in sections.items():
+            if not content:
+                continue
+
+            # Section header
             para = doc.add_paragraph()
-            run = para.add_run(section_title)
+            run = para.add_run(section)
             run.bold = True
             run.font.size = Pt(14)
-            continue
+            add_bottom_border(para)
+            para.paragraph_format.space_before = Pt(14)
+            para.paragraph_format.space_after = Pt(8)
 
-        # Bullet points ( or - )
-        if line.startswith("") or line.startswith("- "):
-            bullet_text = line.lstrip("- ").strip()
-            doc.add_paragraph(bullet_text, style='List Bullet')
-            continue
+            # Professional Statement
+            if section == "Professional Statement" and isinstance(content,str):
+                doc.add_paragraph(content.strip())
 
-        # Bold keys in key-value pairs
-        if ":" in line and line.count(":") == 1 and line.index(":") < 30:
-            key, value = line.split(":", 1)
-            para = doc.add_paragraph()
-            run = para.add_run(key.strip() + ": ")
-            run.bold = True
-            para.add_run(value.strip())
-            continue
-
-        # Bold text inside **double asterisks**
-        if "**" in line:
-            para = doc.add_paragraph()
-            parts = line.split("**")
-            for i, part in enumerate(parts):
-                run = para.add_run(part)
-                if i % 2 == 1:
+            # Work Experience
+            elif section == "Work Experience":
+                for job in content:
+                    para = doc.add_paragraph()
+                    run = para.add_run(job.get("title",""))
                     run.bold = True
-            continue
+                    run.italic = True
+                    company = job.get("company","")
+                    if company:
+                        run_company = para.add_run(f" | {company}")
+                        run_company.bold = True
+                        run_company.italic = True
+                    dates = job.get("dates","")
+                    if dates:
+                        tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
+                        para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                        run_date = para.add_run(f"\t{dates}")
+                        run_date.italic = True
+                    for r in job.get("responsibilities", []):
+                        bullet = doc.add_paragraph(r, style="List Bullet")
+                        bullet.paragraph_format.space_after = Pt(2)
 
-        # Default paragraph
-        doc.add_paragraph(line)
+            # Education
+            elif section == "Education":
+                for edu in content:
+                    para = doc.add_paragraph()
+                    run = para.add_run(edu.get("institution",""))
+                    run.bold = True
+                    run.italic = True
+                    dates = edu.get("dates","")
+                    if dates:
+                        tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
+                        para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                        run_date = para.add_run(f"\t{dates}")
+                        run_date.italic = True
+                    degree_field = f"{edu.get('degree','')} {edu.get('field','')}".strip()
+                    if degree_field:
+                        doc.add_paragraph(degree_field)
+                    if edu.get("result"):
+                        doc.add_paragraph(f"Result: {edu['result']}")
+
+            # Skills / Languages (comma separated)
+            elif section in ["Skills", "Languages"] and isinstance(content,list):
+                doc.add_paragraph(", ".join(content))
+
+            # Projects, Certificates, Positions, Achievements, or any new section
+            else:
+                if isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict):
+                            title = item.get("title") or item.get("position") or ""
+                            company = item.get("company") or item.get("organization") or ""
+                            dates = item.get("dates") or item.get("duration") or ""
+                            description = item.get("description", "") or item.get("desc", "")
+                            responsibilities = item.get("responsibilities",[])
+                            technologies = item.get("technologies",[])
+
+                            p = doc.add_paragraph()
+                            run_main = p.add_run(title)
+                            run_main.bold = True
+                            run_main.italic = True
+                            if company:
+                                run_comp = p.add_run(f" | {company}")
+                                run_comp.bold = True
+                                run_comp.italic = True
+                            if dates:
+                                tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
+                                p.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                                run_date = p.add_run(f"\t{dates}")
+                                run_date.italic = True
+
+                            if description:
+                                doc.add_paragraph(description, style='List Bullet')
+                            for r in responsibilities:
+                                doc.add_paragraph(r, style='List Bullet')
+                            if technologies:
+                                doc.add_paragraph("Technologies: " + ", ".join(technologies))
+                        elif isinstance(item,str):
+                            doc.add_paragraph(item, style='List Bullet')
+                elif isinstance(content,str):
+                    doc.add_paragraph(content)
+
+    else:
+        # Plain text (like cover letter)
+        for line in text.split("\n"):
+            para = doc.add_paragraph(line.strip())
+            para.paragraph_format.space_after = Pt(4)
 
     doc.save(filename)
-    print(f" CV saved as {filename}")
-
-def save_as_pdf(text, filename="generated_cv.pdf"):
-    #replace en dash and other problematic Unicode characters with hyphen
-    text = text.replace("\u2013", "-")  # En dash to hyphen
-    text = text.replace("\u2014", "-")  # Em dash to hyphen
-    text = text.replace("–", "-")
-    text = text.replace("—", "-")
-
-#create new pdf
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
-
-    lines = text.split('\n') #splits the input text into lines for processing
-    for line in lines:
-        line = line.strip() #remove unwanted spacing
-        if not line:
-            pdf.ln(5)
-        elif line.startswith("**") and line.endswith("**"): #makes lines with ** as headers
-            pdf.set_font("Arial", 'B', 12)
-            pdf.cell(0, 10, line.strip("*"), ln=True)
-            pdf.set_font("Arial", '', 12)
-        elif line.startswith("- "): #converts lines with - as bullet pts
-            pdf.multi_cell(0, 10, "- " + line[2:])
-        else:
-            pdf.multi_cell(0, 10, line)
-
-    pdf.output(filename)
-    print(f"CV saved as {filename}")
+    print(f"DOCX saved as {filename}")
+    return filename

@@ -1,34 +1,84 @@
-def build_prompt(data, has_work_exp=None):
-    prompt = f"I am {data.get('full_name')}, I want you to help me draft a CV"
+def build_prompt_CV(user_data, raw_text=None):
+    schema = """
+{
+  "full_name": "",
+  "contact": {
+    "location": "",
+    "email": "",
+    "phone": "",
+    "linkedin": ""
+  },
+  "sections": {
+    "Professional Statement": "",
+    "Work Experience": [
+      {
+        "title": "",
+        "company": "",
+        "location": "",
+        "dates": "",
+        "responsibilities": []
+      }
+    ],
+    "Education": [
+      {
+        "degree": "",
+        "field": "",
+        "institution": "",
+        "dates": "",
+        "result": ""
+      }
+    ],
+    "Skills": [],
+    "Projects": [],
+    "Certificates": []
+    "Additional sections": []
+  }
+}
+"""
 
-    if data.get("target_country"):
-        prompt += f" in {data['target_country']} format"
+    if raw_text:
+        prompt = f"""
+You are an expert CV parser and formatter.
+Extract structured information from the following CV text.
 
-    if data.get("job_description"):
-        prompt += f" according to this JD: {data['job_description']}"
+⚠️ Rules:
+- Return ONLY valid JSON in the schema below.
+- If Professional Statement is missing, generate a concise professional summary suitable for the target country: {user_data.get('target_country', '')}.
+- If any new sections exist in the CV (e.g., Languages, Positions of Responsibility), include them in JSON.
+- If information is missing, leave the field empty, do not fabricate.
+- Respect the JSON structure exactly as shown.
 
-    if data.get("cv_length"):
-        prompt += f". It needs to be {data['cv_length']} pages long"
+Schema:
+{schema}
 
-    if data.get("style"):
-        prompt += f" in {data['style']} style"
+CV Text:
+\"\"\" 
+{raw_text}
+\"\"\"
+"""
+    else:
+        prompt = f"""
+You are an expert CV generator. Use the provided information to create a professional CV.\n
+Ensure that the CV is highly ATS-friendly and has a human written tone. \n
+Incorporate strong action verbs, especially for leadership roles, such as these power action verbs:\n 
+- Leadership: spearheaded, managed, orchestrated. \n
+- Results: acheived, generated, maximised. \n
+- Innovation: designed, implemented, streamlined.\n
+These are just a handful of examples.\n
+Include quantifiable results where possible.\n
+Also, write a professional summary highlighting my goals ONLY IF I have work experience (if no work experience is mentioned, do NOT include a professional summary).\n  
 
-    prompt += ". Make the CV ATS-friendly and human-written. Provide ONLY the CV in a clean format with clear section headers using bullet points. Format it so i can copy-paste into word and export as a pdf. Make sure you provide only the cv without any explanations or citations.\n"
+⚠️ Rules:
+- Return ONLY valid JSON in the schema below.
+- Generate a Professional Statement based on user data if missing.
+- Respect the JSON structure exactly as shown.
+- If information is missing, leave the field empty, do not fabricate.
 
-    prompt += f"\nFull Name: {data.get('full_name')}"
-    prompt += f"\nEmail: {data.get('email')}"
-    prompt += f"\nPhone: {data.get('phone')}"
-    prompt += f"\nLinkedIn: {data.get('linkedin') or 'N/A'}"
-    prompt += f"\nLocation: {data.get('location') or 'N/A'}"
-    prompt += f"\nSkills: {data.get('skills')}"
-    prompt += f"\nCertificates and Awards: {data.get('certificates') or 'N/A'}"
-    prompt += f"\nProjects: {data.get('projects') or 'N/A'}"
+Schema:
+{schema}
 
-    #if they have part-time or internship -> below education section, if full-time -> above education section
-    #add both sections if available, regardless of has_work_exp (for existing workflow)
-    if data.get("work_experience"):
-        prompt += f"\nWork Experience: {data['work_experience']}"
-    if data.get("education"):
-        prompt += f"\nEducation: {data['education']}"
+User Data:
+{user_data}
+"""
 
     return prompt

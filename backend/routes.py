@@ -2,11 +2,12 @@ from flask import Blueprint, request, jsonify, current_app, send_file
 from werkzeug.utils import secure_filename
 from models import db, Query  
 from chatbot.chatbot import PerplexityChatbot
-from scholarship_finder.scholarship import build_prompt, fetch_scholarships
+from scholarship_finder.scholarship import build_prompt as scholarship_prompt, fetch_scholarships
 from sop_builder.sop_builder import generate_sop, save_pdf, save_docx
-from cv_builder.main import generate_cv_from_data
-from cv_builder.save import save_as_docx, save_as_pdf  
+from cv_builder.save import save_as_docx  
 from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx
+from cv_builder.prompt_builder import build_prompt_CV as cv_prompt
+from cv_builder.generate_cv import call_perplexity
 import requests
 import time
 import json
@@ -128,7 +129,7 @@ def scholarships():
         if missing:
             return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
 
-        prompt = build_prompt(data)
+        prompt = scholarship_prompt(data)
         results = fetch_scholarships(prompt)  
 
         scholarships_data = json.loads(results)
@@ -244,10 +245,9 @@ def cv_download_docx():
         if not workflow:
             return {"error": "workflow field is required"}, 400
 
-        has_work_exp = data.get("has_work_exp", None)
         user_data = _extract_user_data(data, workflow)
 
-        generated_cv = generate_cv_from_data(user_data, workflow, has_work_exp)
+        generated_cv = call_perplexity(cv_prompt(user_data))
 
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
         tmp.close()
@@ -272,32 +272,54 @@ def cv_download_docx():
     except Exception as e:
         current_app.logger.error(f"Error in /cv/download/docx: {e}")
         return {"error": str(e)}, 500
-
-@bp.route("/cv/download/pdf", methods=["POST"])
-def cv_download_pdf():
+    
+@bp.route("/cv/generate/coverLetter", methods=["POST"])
+def generate_cover_letter():
     try:
         data = request.get_json()
         if not data:
             return {"error": "JSON body required"}, 400
 
-        workflow = data.get("workflow")
-        if not workflow:
-            return {"error": "workflow field is required"}, 400
+        user_data = _extract_user_data(data, "existing")
+        cover_letter_format = """
+                                Full Name\n
+                                Location\n
+                                Phone number (in +countryCode-number format, eg, +44-1234567890)\n
+                                Email\n\n
 
-        has_work_exp = data.get("has_work_exp", None)
-        user_data = _extract_user_data(data, workflow)
+                                Today's Date in MM dd, yyyy format (where MM is the full month name)\n\n
 
-        generated_cv = generate_cv_from_data(user_data, workflow, has_work_exp)
+                                Dear Hiring Manager (or title.+name of the recruiter if provided, eg, Mr. Smith),\n
 
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+                                Opening Paragraph\n
+                                Body Paragraph(s)\n
+                                Closing Paragraph\n\n
+
+                                Sincerely,\n
+                                Full Name           
+                               """
+
+        if not user_data:
+            return {"error": "user_data is required"}, 400
+
+        cover_prompt = (
+            "Using the CV information below and the job description, create a professional cover letter:\n\n"
+            f"CV information:\n{user_data}\n\nJob Description:\n{user_data['job_description']}\n\n"
+            "State role/source, align 2-3 key skills with examples, show company insight, conclude with interview request. Make it highly ATS-friendly, and have a human written tone."
+            f"Make sure to use this format:\n {cover_letter_format}"
+        )
+
+        generated_cover_letter = call_perplexity(cover_prompt)
+
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
         tmp.close()
-        save_as_pdf(generated_cv, tmp.name)
+        save_as_docx(generated_cover_letter, tmp.name)
 
         response = send_file(
             tmp.name,
             as_attachment=True,
-            download_name="Generated_CV.pdf",
-            mimetype="application/pdf"
+            download_name="Generated_Cover_Letter.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
 
         @response.call_on_close
@@ -310,7 +332,7 @@ def cv_download_pdf():
         return response
 
     except Exception as e:
-        current_app.logger.error(f"Error in /cv/download/pdf: {e}")
+        current_app.logger.error(f"Error in /cover-letter/generate: {e}")
         return {"error": str(e)}, 500
 
 def _extract_user_data(data, workflow):
@@ -328,13 +350,28 @@ def _extract_user_data(data, workflow):
             "education": data.get("education", ""),
             "skills": data.get("skills"),
             "certificates": data.get("certificates"),
-            "projects": data.get("projects")
+            "projects": data.get("projects"),
+            "additionalSec": data.get("additionalSec")
         }
     elif workflow == "existing":
-        user_data = data.get("user_data", {})
-        if not user_data:
-            raise ValueError("user_data is required for existing workflow")
-        return user_data
+        return {
+            "full_name": data.get("full_name"),
+            "target_country": data.get("target_country"),
+            "target_company": data.get("target_company"),
+            "job_description": data.get("job_description"),
+            "cv_length": data.get("cv_length"),
+            "style": data.get("style"),
+            "email": data.get("email"),
+            "phone": data.get("phone"),
+            "linkedin": data.get("linkedin"),
+            "location": data.get("location"),
+            "work_experience": data.get("work_experience", ""),
+            "education": data.get("education", ""),
+            "skills": data.get("skills"),
+            "certificates": data.get("certificates"),
+            "projects": data.get("projects"),
+            "additionalSec": data.get("additionalSec")
+        }
     else:
         raise ValueError("Invalid workflow")
     
@@ -366,3 +403,4 @@ def upload_cv():
     print(info)
 
     return jsonify(json.loads(info)), 200
+

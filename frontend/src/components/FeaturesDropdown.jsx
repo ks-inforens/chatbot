@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, SquarePen, Award, FileText, NotebookText, CircleChevronUp } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function FeaturesDropdown({ onFeatureSelect }) {
   const [open, setOpen] = useState(false);
@@ -75,12 +76,12 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
             />
           </div>
 
-          {features.map(({ title, subtitle, icon: Icon, locked }, idx) => (
-            <div
+          {features.map(({ title, subtitle, icon: Icon, locked, path }, idx) => (
+            <Link
               key={idx}
               className={`relative flex text-sm items-center gap-2 p-2 rounded-xl ${locked ? "cursor-not-allowed" : "cursor-pointer hover:bg-gray-100"
                 } ${idx === 0 ? "highlighted" : ""}`}
-              onClick={() => onSelectFeature({ title, locked })}
+              to={path}
             >
               <Icon size={18} />
               <div>
@@ -92,7 +93,7 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
                   </div>
                 )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
