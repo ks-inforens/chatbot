@@ -604,7 +604,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             )}
 
             <form onSubmit={handleSubmit}>
-                <div className="md:grid md:grid-cols-3 md:gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {(!parsedData || (parsedData && formatOption === "country")) && (
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
