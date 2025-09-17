@@ -51,7 +51,7 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
     if (feature.locked) return;
     setOpen(false);
     if (onFeatureSelect) {
-      onFeatureSelect(feature.title);
+      onFeatureSelect(true);
     }
   };
 
@@ -81,6 +81,7 @@ export default function FeaturesDropdown({ onFeatureSelect }) {
               key={idx}
               className={`relative flex text-sm items-center gap-2 p-2 rounded-xl ${locked ? "cursor-not-allowed" : "cursor-pointer hover:bg-gray-100"
                 } ${idx === 0 ? "highlighted" : ""}`}
+              onClick={onSelectFeature}
               to={path}
             >
               <Icon size={18} />

@@ -76,7 +76,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
 
                         <div className="flex flex-col gap-2 col-span-2">
                             <label className="text-sm mb-1">
-                                Country of Origin<span className="text-orange-600">*</span>
+                                Country of Citizenship<span className="text-orange-600">*</span>
                             </label>
                             <select
                                 name="countryOfOrigin"
@@ -150,7 +150,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
 
                         <div className="flex flex-col gap-2">
                             <label className="text-sm mb-1">
-                                Intended Degree<span className="text-orange-600">*</span>
+                                Level of Study<span className="text-orange-600">*</span>
                             </label>
                             <select
                                 name="intendedDegree"

@@ -66,7 +66,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
     const validateWorkExperience = (workExp, index) => {
         const errors = {};
-        const requiredFields = ['type', 'jobTitle', 'companyName', 'startDate', 'responsibilities', 'achievements'];
+        const requiredFields = ['type', 'jobTitle', 'companyName', 'startDate', 'responsibilities'];
 
         requiredFields.forEach(field => {
             if (!workExp[field] || workExp[field].toString().trim() === "") {
