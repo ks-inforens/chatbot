@@ -857,7 +857,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             {renderFieldError(`workExperience.${i}.responsibilities`)}
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Achievements<span className="text-orange-600">*</span></label>
+                                            <label className="text-sm mb-1">Achievements</label>
                                             <textarea
                                                 value={w.achievements}
                                                 onChange={e => updateWorkExperience(i, "achievements", e.target.value)}
