@@ -49,14 +49,6 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base">{form.preferredUniversity || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Tone</dt>
-                        <dd className="text-base">{form.tone || "Formal"}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-gray-500 text-sm">Word Count Target</dt>
-                        <dd className="text-base">{form.wordCountTarget || "Flexible"}</dd>
-                    </div>
-                    <div>
                         <dt className="text-gray-500 text-sm">Strengths</dt>
                         <dd className="text-base">{form.strengths || "N/A"}</dd>
                     </div>
@@ -70,11 +62,38 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Projects / Research / Publications</dt>
-                        <dd className="text-base whitespace-pre-line">{form.projectsResearch || "N/A"}</dd>
+                        <dd className="flex flex-col gap-2">
+                            {(form.projectsResearch || []).length > 0 ? (
+                                form.projectsResearch.map((p, idx) => (
+                                    <div key={idx}>
+                                        <h1 className="text-sm font-semibold">{p.title}</h1>
+                                        <p className="text-sm">{p.description}</p>
+                                        {p.link && (
+                                            <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-sm italic underline">
+                                                {p.link}
+                                            </a>
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </dd>
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Awards / Scholarships / Recognitions</dt>
-                        <dd className="text-base whitespace-pre-line">{form.awards || "N/A"}</dd>
+                        <dd className="flex flex-col gap-2">
+                            {(form.awards || []).length > 0 ? (
+                                form.awards.map((cert, idx) => (
+                                    <div key={idx}>
+                                        <h1 className="text-sm font-medium">{cert.name}</h1>
+                                        <p className="text-sm italic">{cert.organization}{cert.organization && cert.dateObtained ? ", " : ""}{cert.dateObtained}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </dd>
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Long-Term Goals</dt>

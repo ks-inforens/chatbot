@@ -83,8 +83,6 @@ def build_sop_prompt(user_inputs):
     country_of_origin = user_inputs.get("country_of_origin")
     intended_degree = user_inputs.get("intended_degree")
     preferred_country = user_inputs.get("preferred_country")
-    word_count = user_inputs.get("word_count_target")
-    tone = user_inputs.get("tone") or "Formal"
     field_of_study = user_inputs.get("field_of_study")
     preferred_uni = user_inputs.get("preferred_uni")
 
@@ -94,13 +92,11 @@ def build_sop_prompt(user_inputs):
         f"My preferred university is {preferred_uni}. "
         f"I want you to write me a SOP"
     )
-    if word_count:
-        base_prompt += f" following a strict minimum word count of 10% below {word_count} (i.e. if word count is 1000, minimum word count should be 900)."
 
     base_prompt += (
         "Make sure the SOP is ATS friendly and does not look like an AI wrote it. "
         "It should look like a human wrote it. "
-        f"The SOP should follow this tone {tone}. "
+        "The SOP should follow a professional and formal tone."
         "Only respond with the SOP text. Do not include any explanations or additional messages."
         "Exclude all inline citations or footnote markers.\n"
     )
@@ -116,8 +112,6 @@ def build_sop_prompt(user_inputs):
         ("strengths", "My strengths are"),
         ("why_field", "I want to pursue this field because"),
         ("why_uni", "And this university because"),
-        ("projects", "I have done"),
-        ("awards", "I have received"),
         ("goals", "My long term goals are"),
         ("hobbies", "I like to"),
         ("challenge", "More about me:")
@@ -128,6 +122,22 @@ def build_sop_prompt(user_inputs):
         if value:
             base_prompt += f"{label} {value}.\n"
 
+    if len(user_inputs.get("projects")) > 0:
+        base_prompt += "I have also completed these projects:\n"
+        for p in user_inputs.get("projects"):
+            base_prompt += (f"Title: {p.get("title")}\n"
+                            f"Link: {p.get("link")}\n"         
+                            f"Description: {p.get("description")}\n\n"   
+                            )
+            
+    if len(user_inputs.get("awards")) > 0:
+        base_prompt += "I have received these awards:\n"
+        for p in user_inputs.get("awards"):
+            base_prompt += (f"Name: {p.get("name")}\n"
+                            f"Issuing Organization: {p.get("organization")}\n"         
+                            f"Date obtained: {p.get("dateObtained")}\n\n"   
+                            )
+        
     return base_prompt.strip()
 
 def call_perplexity_api(prompt, token):

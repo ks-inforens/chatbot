@@ -12,11 +12,16 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
 
     const handleNext = () => {
         const requiredFields = [
+            "name",
             "countryOfOrigin",
             "intendedDegree",
             "preferredCountryOfStudy",
             "preferredFieldOfStudy",
             "preferredUniversity",
+            "degree",
+            "qualificationUniversity",
+            "graduationYear",
+            "keySkills"
         ];
 
         for (let field of requiredFields) {
@@ -41,39 +46,6 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 border-b pb-8 border-black/10">
                     {/* Left column */}
                     <div className="flex flex-col gap-6">
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm mb-1">
-                                    Word Count Target
-                                </label>
-                                <input
-                                    type="text"
-                                    name="wordCountTarget"
-                                    value={form.wordCountTarget || ""}
-                                    onChange={handleChange}
-                                    placeholder="Word count"
-                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                />
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm mb-1">Tone</label>
-                                <select
-                                    name="tone"
-                                    value={form.tone || ""}
-                                    onChange={handleChange}
-                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                >
-                                    <option value="">Select</option>
-                                    {options["tones"].map((t) => (
-                                        <option key={t} value={t}>
-                                            {t}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
                         <div className="flex flex-col gap-2 col-span-2">
                             <label className="text-sm mb-1">
                                 Country of Citizenship<span className="text-orange-600">*</span>
@@ -136,7 +108,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                     <div className="flex flex-col gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-sm mb-1">
-                                Name<span className="text-orange-600">*</span>
+                                Full Name<span className="text-orange-600">*</span>
                             </label>
                             <input
                                 type="text"
@@ -308,26 +280,171 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
 
                     <div className="flex flex-col gap-2">
                         <label className="text-xs mb-1">Projects / Research / Publications</label>
-                        <textarea
-                            name="projectsResearch"
-                            value={form.projectsResearch || ""}
-                            onChange={handleChange}
-                            placeholder="Description"
-                            rows={3}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                        />
+                        {(form.projectsResearch || []).map((proj, idx) => (
+                            <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
+                                <div className="flex justify-end absolute top-2 right-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const updated = [...(form.projectsResearch || [])];
+                                            updated.splice(idx, 1);
+                                            setForm((prev) => ({ ...prev, projectsResearch: updated }));
+                                        }}
+                                        className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Title<span className="text-orange-600">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="projectTitle"
+                                            value={proj.title || ""}
+                                            placeholder="Project Title"
+                                            onChange={e => {
+                                                const updated = [...(form.projectsResearch || [])];
+                                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                                setForm(prev => ({ ...prev, projectsResearch: updated }));
+                                            }}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Link</label>
+                                        <input
+                                            type="url"
+                                            name="projectLink"
+                                            value={proj.link || ""}
+                                            placeholder="Project Link (Optional)"
+                                            onChange={e => {
+                                                const updated = [...(form.projectsResearch || [])];
+                                                updated[idx] = { ...updated[idx], link: e.target.value };
+                                                setForm(prev => ({ ...prev, projectsResearch: updated }));
+                                            }}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm mb-1">
+                                        Description<span className="text-orange-600">*</span>
+                                    </label>
+                                    <textarea
+                                        name="projectDescription"
+                                        value={proj.description || ""}
+                                        rows={3}
+                                        placeholder="Project Description"
+                                        onChange={e => {
+                                            const updated = [...(form.projectsResearch || [])];
+                                            updated[idx] = { ...updated[idx], description: e.target.value };
+                                            setForm(prev => ({ ...prev, projectsResearch: updated }));
+                                        }}
+                                        className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setForm((prev) => ({
+                                    ...prev,
+                                    projectsResearch: [...(prev.projectsResearch || []), { title: "", description: "", link: "" }],
+                                }));
+                            }}
+                            className="h-10 max-w-24 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                        >
+                            + Add
+                        </button>
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-xs mb-1">Awards / Scholarships / Recognitions</label>
-                        <textarea
-                            name="awards"
-                            value={form.awards || ""}
-                            onChange={handleChange}
-                            placeholder="Description"
-                            rows={3}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                        />
+                        {(form.awards || []).map((cert, idx) => (
+                            <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
+                                <div className="flex justify-end absolute top-2 right-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const updated = [...(form.awards || [])];
+                                            updated.splice(idx, 1);
+                                            setForm((prev) => ({ ...prev, awards: updated }));
+                                        }}
+                                        className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Award Name<span className="text-orange-600">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="certificateName"
+                                            value={cert.name || ""}
+                                            placeholder="Certificate Name"
+                                            onChange={e => {
+                                                const updated = [...(form.awards || [])];
+                                                updated[idx] = { ...updated[idx], name: e.target.value };
+                                                setForm(prev => ({ ...prev, awards: updated }));
+                                            }}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Issuing Organization<span className="text-orange-600">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="issuingOrg"
+                                            value={cert.organization || ""}
+                                            placeholder="Issuing Organization"
+                                            onChange={e => {
+                                                const updated = [...(form.awards || [])];
+                                                updated[idx] = { ...updated[idx], organization: e.target.value };
+                                                setForm(prev => ({ ...prev, awards: updated }));
+                                            }}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Date Obtained<span className="text-orange-600">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="dateObtained"
+                                            value={cert.dateObtained || ""}
+                                            onChange={e => {
+                                                const updated = [...(form.awards || [])];
+                                                updated[idx] = { ...updated[idx], dateObtained: e.target.value };
+                                                setForm(prev => ({ ...prev, awards: updated }));
+                                            }}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setForm((prev) => ({
+                                    ...prev,
+                                    awards: [...(prev.awards || []), { name: "", organization: "", dateObtained: "" }],
+                                }));
+                            }}
+                            className="h-10 px-4 max-w-24 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                        >
+                            + Add
+                        </button>
                     </div>
 
                     <div className="flex flex-col gap-2">

@@ -21,8 +21,6 @@ export default function SOPBuilderPage() {
         preferredCountryOfStudy: "",
         preferredFieldOfStudy: "",
         preferredUniversity: "",
-        wordCountTarget: "",
-        tone: "Formal",
         keySkills: "",
         degree: "",
         qualificationUniversity: "",
@@ -31,8 +29,8 @@ export default function SOPBuilderPage() {
         strengths: "",
         whyFieldOfStudy: "",
         whyUniversity: "",
-        projectsResearch: "",
-        awards: "",
+        projectsResearch: [],
+        awards: [],
         longTermGoals: "",
         hobbies: "",
         challenge: "",
@@ -205,7 +203,7 @@ export default function SOPBuilderPage() {
                             Download as DOCX
                         </button>
                     </div>
-                    <p className="whitespace-pre-wrap text-justify text-black/80 text-sm max-w-[80vw] px-2">{sopResult}</p>
+                    <p className="whitespace-pre-wrap text-justify text-black/80 text-sm max-w-[80vw] px-2 py-2">{sopResult}</p>
                 </div>
             )}
         </div>
