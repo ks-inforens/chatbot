@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Chatbot from "./pages/Chatbot";
 import Header from "./components/Header";
@@ -7,18 +7,32 @@ import AskNoriPage from "./pages/AskNoriPage";
 import CVBuilderPage from "./pages/CVBuilderPage";
 import ScholarshipFinderPage from "./pages/ScholarshipFinderPage";
 import SOPBuilderPage from "./pages/SOPBuilderPage";
-import { API_BASE_URL } from "./data/api";
 
 export default function App() {
-  const [selectedFeature, setSelectedFeature] = useState("Ask Nori");
   const location = useLocation();
-  
+  const [selectedFeature, setSelectedFeature] = useState();
+
+  useEffect(() => {
+    if (location.pathname === "/scholarship-finder") {
+      setSelectedFeature("Scholarship Finder");
+    }
+    else if (location.pathname === "/cv-builder") {
+      setSelectedFeature("CV Builder");
+    }
+    else if (location.pathname === "/sop-builder") {
+      setSelectedFeature("SOP Builder");
+    }
+    else {
+      setSelectedFeature("Ask Nori");
+    }
+  }, [location.pathname]);
+
   return (
     <>
       <Header />
       {location.pathname !== "/" && <Chatbot />}
       <div className="flex flex-col md:flex-row fadeIn">
-        <div className="hidden md:block"><Sidebar selected={selectedFeature} onSelect={setSelectedFeature} /></div>
+        <div><Sidebar selected={selectedFeature} /></div>
         <div className="w-full min-h-[calc(100vh-82px)] flex bg-gradient-to-b from-[#fff5f0] via-white to-white p-2">
           <Routes>
             <Route path="/" element={<AskNoriPage />} />
