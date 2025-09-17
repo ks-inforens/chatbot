@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AskNoriPanel from "../components/AskNoriPanel";
-import ScholarshipFinderPanel from "../components/ScholarshipFinderPanel";
-import SOPBuilderPanel from "../components/SOPBuilderPanel";
-import CVBuilderPanel from "../components/CVBuilderPanel";
 
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
@@ -11,7 +8,7 @@ function uid() {
 
 export default function Chatbot() {
   const [open, setOpen] = useState(false);
-  const [activeFeature, setActiveFeature] = useState("Ask Nori");
+  const [activeFeature, setActiveFeature] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
 
   const sessionId = useMemo(() => {
@@ -29,24 +26,9 @@ export default function Chatbot() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleFeatureSelect = (featureTitle) => {
-    setActiveFeature(featureTitle);
-    setOpen(true);
-  };
-
-  const renderActivePanel = () => {
-    switch (activeFeature) {
-      case "Ask Nori":
-        return <AskNoriPanel sessionId={sessionId} userId={userId} onFeatureSelect={handleFeatureSelect} />;
-      case "Scholarship Finder":
-        return <ScholarshipFinderPanel onFeatureSelect={handleFeatureSelect} />;
-      case "SOP Builder":
-        return <SOPBuilderPanel onFeatureSelect={handleFeatureSelect} />;
-      case "CV Builder":
-        return <CVBuilderPanel onFeatureSelect={handleFeatureSelect} />;
-      default:
-        return <AskNoriPanel sessionId={sessionId} userId={userId} onFeatureSelect={handleFeatureSelect} />;
-    }
+  const handleFeatureSelect = () => {
+    setOpen(false);
+    setActiveFeature(false);
   };
 
   return (
@@ -63,7 +45,7 @@ export default function Chatbot() {
             exit={{ opacity: 0, scale: 0.8, y: 50 }}
             transition={{ duration: 0.3 }}
           >
-            {renderActivePanel()}
+            <AskNoriPanel sessionId={sessionId} userId={userId} onFeatureSelect={handleFeatureSelect} />;
           </motion.div>
         )}
       </AnimatePresence>
