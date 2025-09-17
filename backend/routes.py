@@ -340,8 +340,6 @@ def _extract_user_data(data, workflow):
         return {
             "full_name": data.get("full_name"),
             "target_country": data.get("target_country"),
-            "cv_length": data.get("cv_length"),
-            "style": data.get("style"),
             "email": data.get("email"),
             "phone": data.get("phone"),
             "linkedin": data.get("linkedin"),
@@ -359,8 +357,6 @@ def _extract_user_data(data, workflow):
             "target_country": data.get("target_country"),
             "target_company": data.get("target_company"),
             "job_description": data.get("job_description"),
-            "cv_length": data.get("cv_length"),
-            "style": data.get("style"),
             "email": data.get("email"),
             "phone": data.get("phone"),
             "linkedin": data.get("linkedin"),

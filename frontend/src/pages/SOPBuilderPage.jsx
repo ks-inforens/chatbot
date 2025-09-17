@@ -56,8 +56,6 @@ export default function SOPBuilderPage() {
             preferred_country: form.preferredCountryOfStudy,
             field_of_study: form.preferredFieldOfStudy,
             preferred_uni: form.preferredUniversity,
-            word_count_target: form.wordCountTarget,
-            tone: form.tone,
             key_skills: form.keySkills,
             degree: form.degree,
             qualification_university: form.qualificationUniversity,

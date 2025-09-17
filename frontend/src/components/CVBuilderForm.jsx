@@ -643,44 +643,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                         </div>
                     )}
 
-                    {(!parsedData || (parsedData && formatOption)) && (
-                        <>
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm px-2 mb-1">
-                                    CV Length
-                                </label>
-                                <SearchDropdown
-                                    label={form.cvLength || "Select"}
-                                    isOpen={openDropdown === "cvLength"}
-                                    onToggle={() => toggleDropdown("cvLength")}
-                                    searchable={false}
-                                    multiSelect={false}
-                                    options={options["cvLengths"].map(c => ({ id: c, name: c }))}
-                                    selectedOptions={form.cvLength ? [form.cvLength] : []}
-                                    onOptionToggle={id => handleSelect("cvLength", id)}
-                                >
-                                    <p className="text-xs italic">If you have extensive experience, consider selecting 2 pages.</p>
-                                </SearchDropdown>
-                            </div>
-
-                            <div className="flex flex-col gap-2">
-                                <label className="text-sm px-2 mb-1">
-                                    CV Style
-                                </label>
-                                <SearchDropdown
-                                    label={form.cvStyle || "Select"}
-                                    isOpen={openDropdown === "cvStyle"}
-                                    onToggle={() => toggleDropdown("cvStyle")}
-                                    searchable={false}
-                                    multiSelect={false}
-                                    options={options["cvStyles"].map(c => ({ id: c, name: c }))}
-                                    selectedOptions={form.cvStyle ? [form.cvStyle] : []}
-                                    onOptionToggle={id => handleSelect("cvStyle", id)}
-                                />
-                            </div>
-                        </>
-                    )}
-
                     {parsedData && formatOption === "company" && (
                         <>
                             <div className="flex flex-col gap-2 md:col-span-3 fadeIn">

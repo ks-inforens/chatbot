@@ -47,15 +47,6 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                             </dd>
                         </div>
                     )}
-
-                    <div>
-                        <dt className="text-gray-500 text-sm">CV Length</dt>
-                        <dd className="text-base">{form.cvLength || "N/A"}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-gray-500 text-sm">Style</dt>
-                        <dd className="text-base">{form.cvStyle || "N/A"}</dd>
-                    </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Email</dt>
                         <dd className="text-base">{form.email || "N/A"}</dd>
