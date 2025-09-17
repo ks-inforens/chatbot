@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Chatbot from "./pages/Chatbot";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar"
@@ -7,14 +7,16 @@ import AskNoriPage from "./pages/AskNoriPage";
 import CVBuilderPage from "./pages/CVBuilderPage";
 import ScholarshipFinderPage from "./pages/ScholarshipFinderPage";
 import SOPBuilderPage from "./pages/SOPBuilderPage";
+import { API_BASE_URL } from "./data/api";
 
 export default function App() {
   const [selectedFeature, setSelectedFeature] = useState("Ask Nori");
-
+  const location = useLocation();
+  
   return (
     <>
       <Header />
-      <Chatbot />
+      {location.pathname !== "/" && <Chatbot />}
       <div className="flex flex-col md:flex-row fadeIn">
         <div className="hidden md:block"><Sidebar selected={selectedFeature} onSelect={setSelectedFeature} /></div>
         <div className="w-full min-h-[calc(100vh-82px)] flex bg-gradient-to-b from-[#fff5f0] via-white to-white p-2">
