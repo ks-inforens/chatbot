@@ -681,7 +681,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                     <div className="space-y-8">
                         <div className="flex flex-col gap-4">
                             <h3 className="font-medium border-b border-black/15 pb-1 px-1">Contact</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end px-1">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start px-1">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">Full Name<span className="text-orange-600">*</span></label>
                                     <input
@@ -981,12 +981,12 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                     <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
-                                Technical Skills
+                                Key Skills
                             </label>
                             <SearchDropdown
                                 label={form.technicalSkills && form.technicalSkills.length > 0
                                     ? form.technicalSkills.join(", ")
-                                    : "Select Technical Skills"}
+                                    : "Select Skills"}
                                 count={form.technicalSkills ? form.technicalSkills.length : 0}
                                 isOpen={openDropdown === "technicalSkills"}
                                 onToggle={() => toggleDropdown("technicalSkills")}
@@ -1000,32 +1000,9 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                             />
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm px-2 mb-1">
-                                Soft Skills
-                            </label>
-                            <SearchDropdown
-                                label={form.softSkills && form.softSkills.length > 0
-                                    ? form.softSkills.join(", ")
-                                    : "Select Soft Skills"}
-                                count={form.softSkills ? form.softSkills.length : 0}
-                                isOpen={openDropdown === "softSkills"}
-                                onToggle={() => toggleDropdown("softSkills")}
-                                searchable
-                                multiSelect
-                                searchValue={softSearch}
-                                onSearchChange={e => setSoftSearch(e.target.value)}
-                                options={filteredSoftSkills.map(skill => ({ id: skill, name: skill }))}
-                                selectedOptions={form.softSkills || []}
-                                onOptionToggle={handleSoftToggle}
-                            />
-                        </div>
-
                         {/* Languages Known */}
                         <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm px-2 mb-1">
-                                Languages Known
-                            </label>
+                            <h2 className="text-xl font-semibold">Languages Known</h2>
                             <div className="flex flex-col">
                                 {(form.languagesKnown || []).map((lang, idx) => (
                                     <div key={idx} className="grid grid-cols-3 gap-4 my-2 items-center">
@@ -1079,7 +1056,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     ...prev,
                                     languagesKnown: [...(prev.languagesKnown || []), { language: "", proficiency: "" }],
                                 }))}
-                                className="h-8 px-4 bg-black/5 hover:bg-black/10 text-xs rounded-full cursor-pointer"
+                                className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
                             >
                                 + Add Language
                             </button>

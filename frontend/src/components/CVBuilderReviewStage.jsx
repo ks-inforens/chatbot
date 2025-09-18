@@ -105,12 +105,8 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         <dt className="text-gray-500 text-sm">Skills</dt>
                         <div className="flex flex-col gap-2">
                             <p className="text-sm">
-                                <span className="font-medium">Technical Skills: </span>
+                                <span className="font-medium">Key Skills: </span>
                                 {(form.technicalSkills || []).length > 0 ? form.technicalSkills.join(", ") : "N/A"}
-                            </p>
-                            <p className="text-sm">
-                                <span className="font-medium">Soft Skills: </span>
-                                {(form.softSkills || []).length > 0 ? form.softSkills.join(", ") : "N/A"}
                             </p>
                             <div>
                                 <h1 className="text-sm font-medium">Languages: </h1>

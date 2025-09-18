@@ -28,7 +28,6 @@ export default function CVBuilderPage() {
         workExperience: [],
         education: [],
         technicalSkills: [],
-        softSkills: [],
         languagesKnown: [],
         certificates: [],
         projects: [],
@@ -69,7 +68,6 @@ export default function CVBuilderPage() {
             education: form.education || [],
             skills: {
                 technical_skills: form.technicalSkills || [],
-                soft_skills: form.softSkills || []
             },
             languages_known: form.languagesKnown || [],
             certificates: form.certificates || [],
