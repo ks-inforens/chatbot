@@ -13,8 +13,8 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                 {/* Left column */}
                 <div className="flex flex-col gap-4">
                     <div>
-                        <dt className="text-gray-500 text-sm">Name</dt>
-                        <dd className="text-base">{form.name || "N/A"}</dd>
+                        <dt className="text-gray-500 text-sm">Full Name</dt>
+                        <dd className="text-base">{form.firstName && form.lastName ? form.firstName + " " + form.lastName : "N/A"}</dd>
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Country of Origin</dt>
@@ -29,11 +29,24 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base">{form.preferredFieldOfStudy || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Academic Qualifications</dt>
-                        <dd className="text-base">{`${form.degree || ""}, ${form.qualificationUniversity || ""}, ${form.graduationYear || ""}, ${form.relevantSubjects || ""}`}</dd>
+                        <dt className="text-gray-500 text-sm">Education Information</dt>
+                        <dd className="flex flex-col gap-2 text-base">
+                            {(form.education || []).length > 0 ? (
+                                form.education.map((edu, idx) => (
+                                    <div key={idx}>
+                                        <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
+                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
+                                        <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
+                                        <p className="text-sm">{edu.results && edu.results}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Key Skills</dt>
+                        <dt className="text-gray-500 text-sm">Skills</dt>
                         <dd className="text-base whitespace-pre-line">{form.keySkills || "N/A"}</dd>
                     </div>
                 </div>

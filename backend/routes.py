@@ -347,6 +347,7 @@ def _extract_user_data(data, workflow):
             "work_experience": data.get("work_experience", ""),
             "education": data.get("education", ""),
             "skills": data.get("skills"),
+            "languages_known": data.get("languages_known"),
             "certificates": data.get("certificates"),
             "projects": data.get("projects"),
             "additionalSec": data.get("additionalSec")
@@ -364,6 +365,7 @@ def _extract_user_data(data, workflow):
             "work_experience": data.get("work_experience", ""),
             "education": data.get("education", ""),
             "skills": data.get("skills"),
+            "languages_known": data.get("languages_known"),
             "certificates": data.get("certificates"),
             "projects": data.get("projects"),
             "additionalSec": data.get("additionalSec")

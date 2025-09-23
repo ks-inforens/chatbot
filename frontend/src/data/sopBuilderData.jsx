@@ -1,6 +1,7 @@
 export const sopOptions = {
   countries: ["India", "United States", "United Kingdom", "Australia", "Canada"],
   studyLevels: ["Undergraduate", "Post Graduate", "PhD"],
+  regions: ["Any", "Other"],
   fields: ["Engineering", "Arts", "Science", "Business"],
   universities: ["Harvard", "Oxford", "MIT", "Stanford"],
   tones: ["Formal", "Informal", "Professional", "Friendly"],

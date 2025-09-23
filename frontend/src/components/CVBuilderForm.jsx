@@ -11,7 +11,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     const [openDropdown, setOpenDropdown] = useState(null);
     const [countrySearch, setCountrySearch] = useState("");
     const [techSearch, setTechSearch] = useState("");
-    const [softSearch, setSoftSearch] = useState("");
     const [validationErrors, setValidationErrors] = useState({});
     const uploadRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -43,12 +42,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                 const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
                 if (!phoneRegex.test(value)) {
                     errors[name] = "Please enter a valid phone number";
-                }
-                break;
-            case 'linkedInURL':
-                const linkedinRegex = /^https:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9\-]+\/?$/;
-                if (value && !linkedinRegex.test(value)) {
-                    errors[name] = "Please enter a valid LinkedIn URL";
                 }
                 break;
             case 'startDate':
@@ -88,7 +81,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
     const validateEducation = (edu, index) => {
         const errors = {};
-        const requiredFields = ['universityName', 'startDate', 'coursework'];
+        const requiredFields = ['universityName', 'discipline', 'country', 'region', 'level', 'results', 'startDate'];
 
         requiredFields.forEach(field => {
             if (!edu[field] || edu[field].toString().trim() === "") {
@@ -113,7 +106,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             const updatedForm = { ...form };
 
             // Basic contact information
-            if (parsedData.full_name) updatedForm.fullName = parsedData.full_name;
+            if (parsedData.full_name) updatedForm.firstName = parsedData.full_name.split(" ")[0];
+            if (parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1];
             if (parsedData.email) updatedForm.email = parsedData.email;
             if (parsedData.phone) updatedForm.phone = parsedData.phone;
             if (parsedData.linkedin) updatedForm.linkedInURL = parsedData.linkedin;
@@ -135,14 +129,24 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
             // Education
             if (parsedData.education && parsedData.education.length > 0) {
-                updatedForm.education = parsedData.education.map(edu => ({
-                    universityName: edu.university_name || '',
-                    startDate: edu.start_date ? formatDateForInput(edu.start_date) : '',
-                    endDate: edu.end_date && edu.end_date !== 'Present' ? formatDateForInput(edu.end_date) : '',
-                    isPresent: edu.end_date === 'Present',
-                    coursework: edu.relevant_coursework || '',
-                    achievements: Array.isArray(edu.achievements) ? edu.achievements.join('\n• ') : edu.achievements || '',
-                }));
+                updatedForm.education = parsedData.education.map(edu => {
+                    const universityOptions = options["universities"] || [];
+                    const isOther = !universityOptions.includes(edu.university_name);
+                    return {
+                        discipline: edu.discipline || "",
+                        level: edu.level || "",
+                        course: edu.course || "",
+                        country: edu.country || "",
+                        region: edu.region || "",
+                        location: edu.location || "",
+                        universityName: isOther ? "Other" : edu.university_name || "",
+                        startDate: edu.start_date ? formatDateForInput(edu.start_date) : "",
+                        endDate: edu.end_date && edu.end_date !== "Present" ? formatDateForInput(edu.end_date) : "",
+                        isPresent: edu.end_date === "Present",
+                        results: edu.results || "",
+                        otherUniversityName: isOther ? edu.university_name : "", 
+                    };
+                });
             }
 
             // Skills
@@ -163,10 +167,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
             // Languages
             if (parsedData.languages_known && parsedData.languages_known.length > 0) {
-                updatedForm.languagesKnown = parsedData.languages_known.map(lang => ({
-                    language: lang.language || '',
-                    proficiency: lang.proficiency || '',
-                }));
+                updatedForm.languagesKnown = parsedData.languages_known || ""
             }
 
             // Certifications
@@ -253,16 +254,27 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         }
     };
 
+    const handleSelectChange = (i, e) => {
+        const value = e.target.value;
+        if (value === "Other") {
+            updateEducation(i, "universityName", "Other");
+        } else {
+            updateEducation(i, "universityName", value);
+        }
+    };
+
+    const handleOtherInputChange = (i, e) => {
+        const value = e.target.value;
+        updateEducation(i, "universityName", "Other");
+        updateEducation(i, "otherUniversityName", value);
+    };
+
     const filteredCountries = options["countries"].filter(c =>
         c.toLowerCase().includes(countrySearch.toLowerCase())
     );
 
     const filteredTechSkills = options["technicalSkills"].filter(skill =>
         skill.toLowerCase().includes(techSearch.toLowerCase())
-    );
-
-    const filteredSoftSkills = options["softSkills"].filter(skill =>
-        skill.toLowerCase().includes(softSearch.toLowerCase())
     );
 
     const toggleDropdown = (name) => {
@@ -278,12 +290,12 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         }
     };
 
-    const handleSoftToggle = (skill) => {
-        const selected = form.softSkills || [];
-        if (selected.includes(skill)) {
-            setForm({ ...form, softSkills: selected.filter(s => s !== skill) });
+    const handleLangToggle = (lang) => {
+        const selected = form.languagesKnown || [];
+        if (selected.includes(lang)) {
+            setForm({ ...form, languagesKnown: selected.filter(l => l !== lang) });
         } else {
-            setForm({ ...form, softSkills: [...selected, skill] });
+            setForm({ ...form, languagesKnown: [...selected, lang] });
         }
     };
 
@@ -369,8 +381,14 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                 startDate: '',
                 endDate: '',
                 isPresent: false,
-                coursework: '',
-                achievements: '',
+                results: '',
+                discipline: '',
+                course: '',
+                level: '',
+                location: '',
+                region: '',
+                country: '',
+                otherUniversityName: '',
             }],
         }));
     };
@@ -433,8 +451,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         setForm(prev => ({ ...prev, [name]: value }));
         setError("");
 
-        // Validate field and update validation errors
-        const fieldErrors = validateField(name, value, ['fullName', 'email', 'phone'].includes(name));
+        const fieldErrors = validateField(name, value, ['firstName', 'lastName', 'email', 'phone'].includes(name));
         setValidationErrors(prev => ({
             ...prev,
             ...fieldErrors
@@ -460,7 +477,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        let requiredFields = ["fullName", "email", "phone"];
+        let requiredFields = ["firstName", "lastName", "email", "phone"];
         let allErrors = {};
 
         if (!parsedData) {
@@ -608,7 +625,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                     {(!parsedData || (parsedData && formatOption === "country")) && (
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
-                                Target Country<span className="text-orange-600">*</span>
+                                Preferred Country<span className="text-orange-600">*</span>
                             </label>
                             <SearchDropdown
                                 label={form.targetCountry || "Select"}
@@ -683,16 +700,28 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                             <h3 className="font-medium border-b border-black/15 pb-1 px-1">Contact</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start px-1">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-sm mb-1">Full Name<span className="text-orange-600">*</span></label>
+                                    <label className="text-sm mb-1">First Name<span className="text-orange-600">*</span></label>
                                     <input
                                         type="text"
-                                        name="fullName"
-                                        value={form.fullName || ""}
+                                        name="firstName"
+                                        value={form.firstName || ""}
                                         onChange={handleChange}
-                                        placeholder="Your full name"
+                                        placeholder="Your first name"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                     />
-                                    {renderFieldError("fullName")}
+                                    {renderFieldError("firstName")}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm mb-1">Last Name<span className="text-orange-600">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={form.lastName || ""}
+                                        onChange={handleChange}
+                                        placeholder="Your last name"
+                                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                    />
+                                    {renderFieldError("lastName")}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">Email<span className="text-orange-600">*</span></label>
@@ -733,7 +762,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                         </div>
                         <div className="flex flex-col gap-4">
                             <h3 className="font-medium border-b border-black/15 pb-1 px-1">Additional Links</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                            <div className="flex flex-col gap-6">
                                 <div className="flex flex-col gap-2 px-1">
                                     <label className="text-sm mb-1">
                                         LinkedIn URL
@@ -748,16 +777,30 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     />
                                     {renderFieldError("linkedInURL")}
                                 </div>
+
                                 {/* Additional Links */}
                                 {(form.additionalLinks || []).map((link, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="url"
-                                        value={link}
-                                        onChange={e => handleLinkChange(idx, e.target.value)}
-                                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                        placeholder="Add URL"
-                                    />
+                                    <div className="relative flex gap-4">
+                                        <input
+                                            key={idx}
+                                            type="url"
+                                            value={link}
+                                            onChange={e => handleLinkChange(idx, e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            placeholder="Add URL"
+                                        />
+                                        <div className="flex">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const removeLinks = [...(form.additionalLinks || [])];
+                                                    removeLinks.splice(idx, 1)
+                                                    setForm((prev) => ({ ...prev, additionalLinks: removeLinks }));
+                                                }} className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
                                 ))}
                                 <button type="button" onClick={addNewLink} className="h-10 w-32 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
                                     + Add more
@@ -802,7 +845,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             {renderFieldError(`workExperience.${i}.jobTitle`)}
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Company Name<span className="text-orange-600">*</span></label>
+                                            <label className="text-sm mb-1">Company<span className="text-orange-600">*</span></label>
                                             <input
                                                 type="text"
                                                 value={w.companyName}
@@ -813,7 +856,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             {renderFieldError(`workExperience.${i}.companyName`)}
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Start Date<span className="text-orange-600">*</span></label>
+                                            <label className="text-sm mb-1">Period<span className="text-orange-600">*</span></label>
                                             <input
                                                 type="date"
                                                 value={w.startDate}
@@ -821,9 +864,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                             />
                                             {renderFieldError(`workExperience.${i}.startDate`)}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">End Date<span className="text-orange-600">*</span></label>
                                             <input
                                                 type="date"
                                                 value={w.endDate}
@@ -879,7 +919,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
                 {/* Education */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4">Education</h2>
+                    <h2 className="text-xl font-semibold mb-4">Education Information</h2>
                     <div>
                         {(form.education || []).map((edu, i) => (
                             <div key={i} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
@@ -895,20 +935,137 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">
-                                            University Name<span className="text-orange-600">*</span>
+                                            Discipline<span className="text-orange-600">*</span>
+                                        </label>
+                                        <select
+                                            value={edu.discipline}
+                                            onChange={e => updateEducation(i, "discipline", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Select discipline</option>
+                                            {options["fields"].map((field) => (
+                                                <option key={field} value={field}>
+                                                    {field}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {renderFieldError(`education.${i}.discipline`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Level of Study<span className="text-orange-600">*</span>
+                                        </label>
+                                        <select
+                                            value={edu.level}
+                                            onChange={e => updateEducation(i, "level", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Select study level</option>
+                                            {options["studyLevels"].map((level) => (
+                                                <option key={level} value={level}>
+                                                    {level}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {renderFieldError(`education.${i}.level`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Course Name
                                         </label>
                                         <input
                                             type="text"
-                                            value={edu.universityName}
-                                            onChange={e => updateEducation(i, "universityName", e.target.value)}
-                                            placeholder="University Name"
+                                            value={edu.course}
+                                            onChange={e => updateEducation(i, "course", e.target.value)}
+                                            placeholder="Course Name"
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                        {renderFieldError(`education.${i}.course`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Country<span className="text-orange-600">*</span>
+                                        </label>
+                                        <select
+                                            value={edu.country}
+                                            onChange={e => updateEducation(i, "country", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Select country</option>
+                                            {options["countries"].map((c) => (
+                                                <option key={c} value={c}>
+                                                    {c}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {renderFieldError(`education.${i}.country`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Region<span className="text-orange-600">*</span>
+                                        </label>
+                                        <select
+                                            value={edu.region}
+                                            onChange={e => updateEducation(i, "region", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Select region</option>
+                                            {options["regions"].map((r) => (
+                                                <option key={r} value={r}>
+                                                    {r}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {renderFieldError(`education.${i}.level`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Location
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={edu.location}
+                                            onChange={e => updateEducation(i, "location", e.target.value)}
+                                            placeholder="Location Name"
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                         />
                                         {renderFieldError(`education.${i}.universityName`)}
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">
-                                            Start Date<span className="text-orange-600">*</span>
+                                            University<span className="text-orange-600">*</span>
+                                        </label>
+
+                                        <select
+                                            value={edu.universityName === "Other" ? "Other" : edu.universityName}
+                                            onChange={e => handleSelectChange(i, e)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Select university</option>
+                                            {options["universities"].map((u) => (
+                                                <option key={u} value={u}>
+                                                    {u}
+                                                </option>
+                                            ))}
+                                            <option value="Other">Other</option>
+                                        </select>
+
+                                        {edu.universityName === "Other" && (
+                                            <input
+                                                type="text"
+                                                value={edu.otherUniversityName}
+                                                onChange={e => handleOtherInputChange(i, e)}
+                                                placeholder="Other"
+                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            />
+                                        )}
+
+                                        {renderFieldError(`education.${i}.universityName`)}
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Start Year<span className="text-orange-600">*</span>
                                         </label>
                                         <input
                                             type="date"
@@ -920,7 +1077,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">End Date</label>
+                                            <label className="text-sm mb-1">End Year<span className="text-orange-600">*</span></label>
                                             <input
                                                 type="date"
                                                 value={edu.endDate}
@@ -941,30 +1098,16 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             <label htmlFor={`present-edu-${i}`} className="text-sm">Present</label>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm mb-1">
-                                            Relevant Coursework<span className="text-orange-600">*</span>
-                                        </label>
+                                    <div className="flex flex-col gap-2 col-span-2">
+                                        <label className="text-sm mb-1">Results/Grade<span className="text-orange-600">*</span></label>
                                         <textarea
-                                            value={edu.coursework}
-                                            onChange={e => updateEducation(i, "coursework", e.target.value)}
-                                            className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
-                                            placeholder="Coursework"
-                                            rows={4}
-                                        />
-                                        {renderFieldError(`education.${i}.coursework`)}
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-sm mb-1">Achievements</label>
-                                        <textarea
-                                            value={edu.achievements}
-                                            onChange={e => updateEducation(i, "achievements", e.target.value)}
-                                            placeholder="Achievements"
+                                            value={edu.results}
+                                            onChange={e => updateEducation(i, "results", e.target.value)}
+                                            placeholder="Results"
                                             className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
                                             rows={4}
                                         />
+                                        {renderFieldError(`education.${i}.results`)}
                                     </div>
                                 </div>
                             </div>
@@ -978,11 +1121,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                 {/* Skills */}
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold mb-4">Skills</h2>
-                    <div className="flex flex-col md:grid md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="text-sm px-2 mb-1">
-                                Key Skills
-                            </label>
                             <SearchDropdown
                                 label={form.technicalSkills && form.technicalSkills.length > 0
                                     ? form.technicalSkills.join(", ")
@@ -1002,64 +1142,21 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
                         {/* Languages Known */}
                         <div className="space-y-2 md:col-span-2">
-                            <h2 className="text-xl font-semibold">Languages Known</h2>
+                            <h2 className="text-xl font-semibold mb-4">Languages</h2>
                             <div className="flex flex-col">
-                                {(form.languagesKnown || []).map((lang, idx) => (
-                                    <div key={idx} className="grid grid-cols-3 gap-4 my-2 items-center">
-                                        <select
-                                            name={`language-${idx}`}
-                                            value={lang.language || ""}
-                                            onChange={(e) => {
-                                                const languagesKnown = [...(form.languagesKnown || [])];
-                                                languagesKnown[idx] = { ...languagesKnown[idx], language: e.target.value };
-                                                setForm((prev) => ({ ...prev, languagesKnown }));
-                                            }}
-                                            className="text-xs h-10 px-2 border border-orange-800/25 rounded-lg"
-                                        >
-                                            <option value="">Select Language</option>
-                                            {options["languages"].map((l) => (
-                                                <option key={l} value={l}>{l}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            name={`proficiency-${idx}`}
-                                            value={lang.proficiency || ""}
-                                            onChange={(e) => {
-                                                const languagesKnown = [...(form.languagesKnown || [])];
-                                                languagesKnown[idx] = { ...languagesKnown[idx], proficiency: e.target.value };
-                                                setForm((prev) => ({ ...prev, languagesKnown }));
-                                            }}
-                                            className="text-xs h-10 px-2 border border-orange-800/25 rounded-lg"
-                                        >
-                                            <option value="">Select Proficiency</option>
-                                            {options["proficiencyLevels"].map((p) => (
-                                                <option key={p} value={p}>{p}</option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const languagesKnown = [...(form.languagesKnown || [])];
-                                                languagesKnown.splice(idx, 1);
-                                                setForm((prev) => ({ ...prev, languagesKnown }));
-                                            }}
-                                            className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-white text-xs font-semibold rounded-full cursor-pointer"
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                ))}
+                                <SearchDropdown
+                                    label={form.languagesKnown && form.languagesKnown.length > 0
+                                        ? form.languagesKnown.join(", ")
+                                        : "Select Languages"}
+                                    count={form.languagesKnown ? form.languagesKnown.length : 0}
+                                    isOpen={openDropdown === "languagesKnown"}
+                                    onToggle={() => toggleDropdown("languagesKnown")}
+                                    multiSelect
+                                    options={options["languages"].map(lang => ({ id: lang, name: lang }))}
+                                    selectedOptions={form.languagesKnown || []}
+                                    onOptionToggle={handleLangToggle}
+                                />
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setForm((prev) => ({
-                                    ...prev,
-                                    languagesKnown: [...(prev.languagesKnown || []), { language: "", proficiency: "" }],
-                                }))}
-                                className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
-                            >
-                                + Add Language
-                            </button>
                         </div>
                     </div>
                 </div>

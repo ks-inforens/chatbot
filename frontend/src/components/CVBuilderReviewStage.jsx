@@ -18,13 +18,13 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                 <div className="flex flex-col gap-4">
                     <div>
                         <dt className="text-gray-500 text-sm">Full Name</dt>
-                        <dd className="text-base">{form.fullName || "N/A"}</dd>
+                        <dd className="text-base">{form.firstName && form.lastName ? form.firstName + " " + form.lastName : "N/A"}</dd>
                     </div>
 
                     {/* Conditional rendering based on format option */}
                     {form.targetCountry && (
                         <div>
-                            <dt className="text-gray-500 text-sm">Target Country</dt>
+                            <dt className="text-gray-500 text-sm">Preferred Country</dt>
                             <dd className="text-base">{form.targetCountry}</dd>
                         </div>
                     )}
@@ -74,7 +74,7 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                                 form.workExperience.map((job, idx) => (
                                     <div key={idx}>
                                         <h1 className="text-sm font-semibold">{job.jobTitle} at {job.companyName}</h1>
-                                        {job.startDate && <h2 className="text-sm italic mb-1">{job.startDate} - {job.endDate}</h2>}
+                                        {job.startDate && job.endDate && <h2 className="text-sm italic mb-1">{job.startDate} - {job.isPresent ? "Present" : job.endDate}</h2>}
                                         <p className="text-sm"><span className="font-medium">Responsibilities:</span> {job.responsibilities || "N/A"}</p>
                                         <p className="text-sm"><span className="font-medium">Achievements:</span> {job.achievements || "N/A"}</p>
                                     </div>
@@ -85,15 +85,15 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Education</dt>
+                        <dt className="text-gray-500 text-sm">Education Information</dt>
                         <dd className="flex flex-col gap-2 text-base">
                             {(form.education || []).length > 0 ? (
                                 form.education.map((edu, idx) => (
                                     <div key={idx}>
-                                        <h1 className="text-sm font-semibold">{edu.universityName}</h1>
+                                        <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
                                         {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
-                                        {edu.coursework && <p className="text-sm"><span className="font-medium">Coursework:</span> {edu.coursework}</p>}
-                                        {edu.achievements && <p className="text-sm"><span className="font-medium">Achievements:</span> {edu.achievements}</p>}
+                                        <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
+                                        <p className="text-sm">{edu.results && edu.results}</p>
                                     </div>
                                 ))
                             ) : (
@@ -102,24 +102,16 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Skills</dt>
+                        <dt className="text-gray-500 text-sm">Skills & Languages</dt>
                         <div className="flex flex-col gap-2">
                             <p className="text-sm">
-                                <span className="font-medium">Key Skills: </span>
+                                <span className="font-medium">Skills: </span>
                                 {(form.technicalSkills || []).length > 0 ? form.technicalSkills.join(", ") : "N/A"}
                             </p>
-                            <div>
-                                <h1 className="text-sm font-medium">Languages: </h1>
-                                {(form.languagesKnown || []).length > 0 ? (
-                                    form.languagesKnown.map((lang, idx) => (
-                                        <div key={idx}>
-                                            <p className="text-sm italic">{lang.language} ({lang.proficiency})</p>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <span className="text-sm">N/A</span>
-                                )}
-                            </div>
+                            <p className="text-sm">
+                                <span className="font-medium">Languages: </span>
+                                {(form.languagesKnown || []).length > 0 ? form.languagesKnown.join(", ") : "N/A"}
+                            </p>
                         </div>
                     </div>
                     <div>

@@ -15,17 +15,15 @@ const downloadFile = (blob, filename) => {
 
 export default function SOPBuilderPage() {
     const [form, setForm] = useState({
-        name: "",
+        firstName: "",
+        lastName: "",
         countryOfOrigin: "",
         intendedDegree: "",
         preferredCountryOfStudy: "",
         preferredFieldOfStudy: "",
         preferredUniversity: "",
         keySkills: "",
-        degree: "",
-        qualificationUniversity: "",
-        graduationYear: "",
-        relevantSubjects: "",
+        education: [],
         strengths: "",
         whyFieldOfStudy: "",
         whyUniversity: "",
@@ -50,17 +48,14 @@ export default function SOPBuilderPage() {
         setSopResult("");
 
         const payload = {
-            name: form.name,
+            name: form.firstName + " " + form.lastName,
             country_of_origin: form.countryOfOrigin,
             intended_degree: form.intendedDegree,
             preferred_country: form.preferredCountryOfStudy,
             field_of_study: form.preferredFieldOfStudy,
             preferred_uni: form.preferredUniversity,
             key_skills: form.keySkills,
-            degree: form.degree,
-            qualification_university: form.qualificationUniversity,
-            graduation_year: form.graduationYear,
-            relevant_subjects: form.relevantSubjects,
+            education: form.education,
             strengths: form.strengths,
             why_field: form.whyFieldOfStudy,
             why_uni: form.whyUniversity,

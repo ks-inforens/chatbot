@@ -94,16 +94,16 @@ export default function ScholarshipFinderPage() {
     citizenship: "",
     studyLevel: "",
     field: "",
-    performance: "",
     disability: "",
     disabilityDetails: "",
     preferredCountry: "",
     university: "",
     intake: "",
-    dob: "", // updated from age to dob
+    dob: "",
     gender: "",
     genderDetails: "",
     extracurricular: "",
+    education: [],
   });
 
   const [step, setStep] = useState(1);
@@ -119,15 +119,15 @@ export default function ScholarshipFinderPage() {
       preferred_universities: form.university ? [form.university] : [],
       field: form.field,
       course_intake: form.intake || null,
-      academic_perf: form.performance || null,
-      dob: form.dob || null,  // changed from age to dob here
+      academic_perf: form.education || [],
+      dob: form.dob || null,  
       gender: form.gender || null,
       disability:
         form.disability === "Yes"
           ? form.disabilityDetails || "Yes"
           : form.disability === "No"
-          ? "No"
-          : null,
+            ? "No"
+            : null,
       extracurricular: form.extracurricular || null,
     };
   };

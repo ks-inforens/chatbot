@@ -16,7 +16,8 @@ const downloadFile = (blob, filename) => {
 
 export default function CVBuilderPage() {
     const [form, setForm] = useState({
-        fullName: "",
+        firstName: "",
+        lastName: "",
         targetCountry: "",
         targetCompany: "",
         jobDescription: "",
@@ -59,7 +60,7 @@ export default function CVBuilderPage() {
         const basePayload = {
             workflow: getWorkflowType(),
             has_work_exp: (form.workExperience && form.workExperience.length > 0) ? "yes" : "no",
-            full_name: form.fullName,
+            full_name: form.firstName + " " + form.lastName,
             email: form.email,
             phone: form.phone,
             linkedin: form.linkedInURL,

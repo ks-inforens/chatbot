@@ -40,8 +40,21 @@ export default function ReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base">{form.field || <span className="text-gray-800">N/A</span>}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Academic Performance</dt>
-                        <dd className="text-base">{form.performance || <span className="text-gray-800">N/A</span>}</dd>
+                        <dt className="text-gray-500 text-sm">Education Information</dt>
+                        <dd className="flex flex-col gap-2 text-base">
+                            {(form.education || []).length > 0 ? (
+                                form.education.map((edu, idx) => (
+                                    <div key={idx}>
+                                        <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
+                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
+                                        <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
+                                        <p className="text-sm">{edu.results && edu.results}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </dd>
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">Disability Status</dt>
