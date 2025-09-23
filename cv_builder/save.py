@@ -1,9 +1,46 @@
 import json
 from docx import Document
-from docx.shared import Pt, Inches
+from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+
+def ensure_full_url(url):
+    if not url.startswith(("http://", "https://")):
+        return "https://" + url
+    return url
+
+def add_hyperlink(paragraph, url, text, color=RGBColor(0, 0, 255), underline=True):
+    part = paragraph.part
+    r_id = part.relate_to(ensure_full_url(url), "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
+
+    new_run = OxmlElement("w:r")
+    rPr = OxmlElement("w:rPr")
+
+    c = OxmlElement("w:color")
+    c.set(qn("w:val"), str(color))
+
+    rPr.append(c)
+
+    if underline:
+        u = OxmlElement("w:u")
+        u.set(qn("w:val"), "single")
+        rPr.append(u)
+
+    new_run.append(rPr)
+
+    text_elem = OxmlElement("w:t")
+    text_elem.text = text
+    new_run.append(text_elem)
+
+    hyperlink.append(new_run)
+
+    paragraph._p.append(hyperlink)
+
+    return None
 
 def add_bottom_border(paragraph):
     """Add a horizontal line under section headers"""
@@ -67,14 +104,23 @@ def save_as_docx(text, filename="generated_cv.docx"):
         para = doc.add_paragraph()
         para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
         contact = data.get("contact", {})
-        contact_items = []
+
+        first = True
         if contact.get("email"):
-            contact_items.append(contact['email'])
+            if not first:
+                para.add_run(" | ")
+            add_hyperlink(para, f"mailto:{contact['email']}", contact['email'])
+            first = False
         if contact.get("phone"):
-            contact_items.append(contact['phone'])
+            if not first:
+                para.add_run(" | ")
+            para.add_run(contact['phone'])
+            first = False
         if contact.get("linkedin"):
-            contact_items.append(contact['linkedin'])
-        para.add_run(" | ".join(contact_items))
+            if not first:
+                para.add_run(" | ")
+            add_hyperlink(para, contact['linkedin'], contact['linkedin'])
+            first = False
 
         # === Sections ===
         sections = data.get("sections", {})

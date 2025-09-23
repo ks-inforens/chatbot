@@ -353,23 +353,27 @@ def _extract_user_data(data, workflow):
             "additionalSec": data.get("additionalSec")
         }
     elif workflow == "existing":
-        return {
-            "full_name": data.get("full_name"),
-            "target_country": data.get("target_country"),
-            "target_company": data.get("target_company"),
-            "job_description": data.get("job_description"),
-            "email": data.get("email"),
-            "phone": data.get("phone"),
-            "linkedin": data.get("linkedin"),
-            "location": data.get("location"),
-            "work_experience": data.get("work_experience", ""),
-            "education": data.get("education", ""),
-            "skills": data.get("skills"),
-            "languages_known": data.get("languages_known"),
-            "certificates": data.get("certificates"),
-            "projects": data.get("projects"),
-            "additionalSec": data.get("additionalSec")
-        }
+        return_fields = {}
+        if (data.get("target_country")): return_fields["target_country"] = data.get("target_country")
+        elif (data.get("target_company") or data.get("job_description")):
+            return_fields["target_company"] = data.get("target_company")
+            return_fields["job_description"] = data.get("job_description")
+        elif (data.get("target_role")): return_fields["target_role"] = data.get("target_role")
+        
+        return_fields["full_name"] = data.get("full_name")
+        return_fields["email"] = data.get("email")
+        return_fields["phone"] = data.get("phone")
+        return_fields["linkedin"] = data.get("linkedin")
+        return_fields["location"] = data.get("location")
+        return_fields["work_experience"] = data.get("work_experience", "")
+        return_fields["education"] = data.get("education", "")
+        return_fields["skills"] = data.get("skills")
+        return_fields["languages_known"] = data.get("languages_known")
+        return_fields["certificates"] = data.get("certificates")
+        return_fields["projects"] = data.get("projects")
+        return_fields["additionalSec"] = data.get("additionalSec")
+                
+        return return_fields
     else:
         raise ValueError("Invalid workflow")
     
