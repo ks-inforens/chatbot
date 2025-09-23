@@ -104,10 +104,6 @@ def build_sop_prompt(user_inputs):
     base_prompt += "Here are my details:\n"
 
     optional_fields = [
-        ("degree", "My academic qualifications include a degree in"),
-        ("qualification_university", "I received my academic qualification from the university/school of"),
-        ("graduation_year", "My academic qualifications were completed in the year"),
-        ("relevant_subjects", "My relevant subjects within the degree are"),
         ("key_skills", "My key skills are"),
         ("strengths", "My strengths are"),
         ("why_field", "I want to pursue this field because"),
@@ -128,6 +124,24 @@ def build_sop_prompt(user_inputs):
             base_prompt += (f"Title: {p.get("title")}\n"
                             f"Link: {p.get("link")}\n"         
                             f"Description: {p.get("description")}\n\n"   
+                            )
+            
+    if len(user_inputs.get("education")) > 0:
+        base_prompt += "Here are my past education details:\n"
+        for e in user_inputs.get("education"):
+            if e.get("isPresent"): end = "Presently studying here"
+            else: end = e.get("endDate")
+            if e.get("universityName") == "Other": uni = e.get("otherUniversityName")
+            else: uni = e.get("universityName")
+            base_prompt += (f"Discipline: {e.get("discipline")}\n"
+                            f"Course Name: {e.get("course")}\n"         
+                            f"Level of Study: {e.get("level")}\n"   
+                            f"Country of Study: {e.get("country")}\n"   
+                            f"Location of Study: {e.get("location")}\n"
+                            f"Results I got: {e.get("results")}\n"
+                            f"University Name: {uni}\n"
+                            f"Start Date: {e.get("startDate")}\n"
+                            f"End Date: {end}\n"
                             )
             
     if len(user_inputs.get("awards")) > 0:

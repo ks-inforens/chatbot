@@ -34,17 +34,20 @@ def extract_info_from_text(text):
                 -> responsibilities: list of roles or responsibilities they had in the job (separated by commahs)\n 
                 -> achievements: list of achievements or accomplishments within the job (separated by commahs)\n
                 education: this should be an array of dictionaries containing these following fields\n
+                -> discipline: name of the discipline pursued (e.g., Arts, Business, IT, etc)\n
+                -> level: name of the degree level of education (fixed options - either Undergraduate, Postgraduate or PhD)\n
+                -> course: name of the course pursued for education (e.g., Computer Science, Business Management, etc)\n
+                -> country: name of the country of education (e.g., Australia, UK, USA, etc)\n
+                -> region: name of region of education (e.g., Greater London for UK, Maharashtra for India, etc)\n
+                -> location: name of the city of education (e.g., London in Greater London, Mumbai in Maharshtra, etc)\n
                 -> university_name: name of school/university they received the qualification/degree from\n
                 -> start_date: when they started their education in that specific institution in mm/dd/yyyy format\n
                 -> end_date: when they ended their education in that specific institution in mm/dd/yyyy format or 'Present' for still studying\n
-                -> relevant_coursework: name of the degree or coursework included within the qualification\n
-                -> achievements: results of the qualification\n
+                -> results: results of the qualification (e.g., First Class Hons for UG/PG/PhD, AAA for A levels, 43/45 for IB, etc)\n
                 skills: this should be a single dictionary containing these following fields\n
                 -> technical_skills: list of technical skills separated by a commah (e.g. Java, Python, C++)\n
                 -> soft_skills: list of soft skills separated by a commah (e.g. Communication, Teamwork)\n
-                languages_known: this should be a list of dictionaries containing these following fields\n
-                -> language: the name of the language (e.g. French)
-                -> proficiency: the proficiency given these fixed 4 options - 'Beginner', 'Intermediate', 'Advanced', 'Native'\n
+                languages_known: this should be a list of languages known (e.g., English, French, etc) \n
                 certifications: this should be a list of dictionaries with these following fields\n
                 -> name: name of the certification\n
                 -> organisation: name of the issuing organisation of the certification\n
