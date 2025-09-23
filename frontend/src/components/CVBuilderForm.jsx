@@ -6,7 +6,7 @@ import { cvOptions as options } from "../data/cvBuilderData";
 import { API_BASE_URL } from "../data/api";
 import axios from "axios";
 
-export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, parsedData, setParsedData, file, setFile }) {
+export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, parsedData, setParsedData, file, setFile, formatOption, setFormatOption }) {
     const [error, setError] = useState("");
     const [openDropdown, setOpenDropdown] = useState(null);
     const [countrySearch, setCountrySearch] = useState("");
@@ -14,7 +14,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     const [validationErrors, setValidationErrors] = useState({});
     const uploadRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [formatOption, setFormatOption] = useState("");
 
     const fileUrl = file ? URL.createObjectURL(file) : null;
 
@@ -144,7 +143,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                         endDate: edu.end_date && edu.end_date !== "Present" ? formatDateForInput(edu.end_date) : "",
                         isPresent: edu.end_date === "Present",
                         results: edu.results || "",
-                        otherUniversityName: isOther ? edu.university_name : "", 
+                        otherUniversityName: isOther ? edu.university_name : "",
                     };
                 });
             }
@@ -486,6 +485,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             requiredFields.push("targetCountry");
         } else if (parsedData && formatOption === "company") {
             requiredFields.push("targetCompany", "jobDescription");
+        } else if (parsedData && formatOption === "role") {
+            requiredFields.push("targetRole");
         } else if (parsedData && !formatOption) {
             setError("Please select a formatting option.");
             return;
@@ -616,6 +617,16 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                         >
                             Format by Company
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormatOption("role")}
+                            className={`px-4 py-3 md:py-0 h-10 rounded-full text-sm font-medium transition-all duration-300 ${formatOption === "role"
+                                ? "bg-[#db5800] text-white"
+                                : "bg-black/5 text-black/80 hover:bg-black/10"
+                                }`}
+                        >
+                            Format by Role
+                        </button>
                     </div>
                 </div>
             )}
@@ -689,6 +700,23 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 />
                             </div>
                         </>
+                    )}
+
+                    {parsedData && formatOption === "role" && (
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm px-2 mb-1">
+                                Desired Role<span className="text-orange-600">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="targetRole"
+                                value={form.targetRole || ""}
+                                onChange={handleChange}
+                                placeholder="Enter your desired role"
+                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                            />
+                            {renderFieldError("targetRole")}
+                        </div>
                     )}
                 </div>
 
@@ -768,7 +796,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         LinkedIn URL
                                     </label>
                                     <input
-                                        type="url"
+                                        type="text"
                                         name="linkedInURL"
                                         value={form.linkedInURL || ""}
                                         onChange={handleChange}

@@ -20,6 +20,7 @@ export default function CVBuilderPage() {
         lastName: "",
         targetCountry: "",
         targetCompany: "",
+        targetRole: "",
         jobDescription: "",
         coverLetter: false,
         email: "",
@@ -46,6 +47,7 @@ export default function CVBuilderPage() {
     const [loadingCV, setLoadingCV] = useState(false);
     const [errorCover, setErrorCover] = useState("");
     const [generatedCV, setGeneratedCV] = useState();
+    const [formatOption, setFormatOption] = useState("");
 
     const handleNext = () => setStep(2);
     const handleEdit = () => setStep(1);
@@ -86,6 +88,10 @@ export default function CVBuilderPage() {
 
         if (form.jobDescription) {
             basePayload.job_description = form.jobDescription;
+        }
+
+        if (form.targetRole) {
+            basePayload.target_role = form.targetRole;
         }
 
         return basePayload;
@@ -183,6 +189,8 @@ export default function CVBuilderPage() {
                     setParsedData={setParsedData}
                     file={file}
                     setFile={setFile}
+                    formatOption={formatOption}
+                    setFormatOption={setFormatOption}
                 />
             )}
             {step === 2 && (
