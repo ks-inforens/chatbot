@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+from flasgger import Swagger
 from dotenv import load_dotenv
 import os
 from db import db, init_db
@@ -11,6 +12,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 load_dotenv()
 app = Flask(__name__)
 CORS(app)
+swagger = Swagger(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['PERPLEXITY_API_KEY'] = os.getenv('PERPLEXITY_API_KEY')

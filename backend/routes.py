@@ -8,6 +8,7 @@ from cv_builder.save import save_as_docx
 from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx
 from cv_builder.prompt_builder import build_prompt_CV as cv_prompt
 from cv_builder.generate_cv import call_perplexity
+from flasgger import swag_from
 import requests
 import time
 import json
@@ -31,11 +32,8 @@ def create_chatbot():
         content_file_path=current_app.config.get('CONTENT_FILE')
     )
 
-@bp.route('/health', methods=['GET'])
-def health():
-    return jsonify({"status": "ok"})
-
 @bp.route('/ask', methods=['POST'])
+@swag_from('specs/api_spec.yaml', endpoint='api.ask')
 def ask():
     start = time.time()
     data = request.get_json(silent=True) or {}
@@ -80,6 +78,7 @@ def ask():
         return jsonify({"error": f"Failed to get answer: {str(e)}"}), 500
 
 @bp.route('/feedback', methods=['POST'])
+@swag_from('specs/api_spec.yaml', endpoint='api.feedback')
 def feedback():
     data = request.get_json()
     message_id = data.get("messageId")
@@ -107,6 +106,7 @@ def feedback():
         return jsonify({"error": str(e)}), 500
 
 @bp.route("/transcribe")
+@swag_from('specs/api_spec.yaml', endpoint='api.transcribe')
 def transcribe():
     try:
         audio_file = request.files["file"]
@@ -120,6 +120,7 @@ def transcribe():
         return jsonify({"error": str(e)}), 500
     
 @bp.route("/scholarships", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.scholarships')
 def scholarships():
     try:
         data = request.get_json(silent=True) or {}
@@ -144,6 +145,7 @@ def scholarships():
         return jsonify({"error": str(e)}), 500
     
 @bp.route("/sop", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.sop')
 def sop():
     try:
         data = request.get_json(silent=True) or {}
@@ -171,6 +173,7 @@ def sop():
         return jsonify({"error": str(e)}), 500
     
 @bp.route("/sop/download/pdf", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.sop_download_pdf')
 def sop_download_pdf():
     try:
         data = request.get_json()
@@ -203,6 +206,7 @@ def sop_download_pdf():
         return {"error": str(e)}, 500
 
 @bp.route("/sop/download/docx", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.sop_download_docx')
 def sop_download_docx():
     try:
         data = request.get_json()
@@ -235,6 +239,7 @@ def sop_download_docx():
         return {"error": str(e)}, 500
 
 @bp.route("/cv/download/docx", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.cv_download_docx')
 def cv_download_docx():
     try:
         data = request.get_json()
@@ -274,6 +279,7 @@ def cv_download_docx():
         return {"error": str(e)}, 500
     
 @bp.route("/cv/generate/coverLetter", methods=["POST"])
+@swag_from('specs/api_spec.yaml', endpoint='api.generate_cover_letter')
 def generate_cover_letter():
     try:
         data = request.get_json()
@@ -378,6 +384,7 @@ def _extract_user_data(data, workflow):
         raise ValueError("Invalid workflow")
     
 @bp.route('/upload-cv', methods=['POST'])
+@swag_from('specs/api_spec.yaml', endpoint='api.upload_cv')
 def upload_cv():
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
