@@ -62,15 +62,14 @@ def normalize_text(text):
             text = text[4:].strip()
     return text.strip()
 
-
 def save_as_docx(text, filename="generated_cv.docx"):
     doc = Document()
 
     section = doc.sections[0]
-    section.top_margin = Inches(0.5)    
-    section.bottom_margin = Inches(0.5)  
-    section.left_margin = Inches(0.5) 
-    section.right_margin = Inches(0.5) 
+    section.top_margin = Inches(0.5)
+    section.bottom_margin = Inches(0.5)
+    section.left_margin = Inches(0.5)
+    section.right_margin = Inches(0.5)
 
     style = doc.styles['Normal']
     font = style.font
@@ -79,155 +78,220 @@ def save_as_docx(text, filename="generated_cv.docx"):
     style.paragraph_format.space_after = Pt(4)
 
     try:
-        data = json.loads(normalize_text(text))
+        data = json.loads(text)
         is_json = True
     except:
         is_json = False
 
-    if is_json:
-        # === Name ===
-        para = doc.add_paragraph()
-        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        run = para.add_run(data.get("full_name",""))
-        run.bold = True
-        run.font.size = Pt(16)
-
-        # === Location ===
-        location = data.get("contact", {}).get("location", "")
-        if location:
-            para = doc.add_paragraph()
-            para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-            run = para.add_run(location)
-            run.font.size = Pt(10)
-
-        # === Contact info ===
-        para = doc.add_paragraph()
-        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        contact = data.get("contact", {})
-
-        first = True
-        if contact.get("email"):
-            if not first:
-                para.add_run(" | ")
-            add_hyperlink(para, f"mailto:{contact['email']}", contact['email'])
-            first = False
-        if contact.get("phone"):
-            if not first:
-                para.add_run(" | ")
-            para.add_run(contact['phone'])
-            first = False
-        if contact.get("linkedin"):
-            if not first:
-                para.add_run(" | ")
-            add_hyperlink(para, contact['linkedin'], contact['linkedin'])
-            first = False
-
-        # === Sections ===
-        sections = data.get("sections", {})
-        for section, content in sections.items():
-            if not content:
-                continue
-
-            # Section header
-            para = doc.add_paragraph()
-            run = para.add_run(section)
-            run.bold = True
-            run.font.size = Pt(14)
-            add_bottom_border(para)
-            para.paragraph_format.space_before = Pt(14)
-            para.paragraph_format.space_after = Pt(8)
-
-            # Professional Statement
-            if section == "Professional Statement" and isinstance(content,str):
-                doc.add_paragraph(content.strip())
-
-            # Work Experience
-            elif section == "Work Experience":
-                for job in content:
-                    para = doc.add_paragraph()
-                    run = para.add_run(job.get("title",""))
-                    run.bold = True
-                    run.italic = True
-                    company = job.get("company","")
-                    if company:
-                        run_company = para.add_run(f" | {company}")
-                        run_company.bold = True
-                        run_company.italic = True
-                    dates = job.get("dates","")
-                    if dates:
-                        tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
-                        para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
-                        run_date = para.add_run(f"\t{dates}")
-                        run_date.italic = True
-                    for r in job.get("responsibilities", []):
-                        bullet = doc.add_paragraph(r, style="List Bullet")
-                        bullet.paragraph_format.space_after = Pt(2)
-
-            # Education
-            elif section == "Education":
-                for edu in content:
-                    para = doc.add_paragraph()
-                    run = para.add_run(edu.get("institution",""))
-                    run.bold = True
-                    run.italic = True
-                    dates = edu.get("dates","")
-                    if dates:
-                        tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
-                        para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
-                        run_date = para.add_run(f"\t{dates}")
-                        run_date.italic = True
-                    degree_field = f"{edu.get('degree','')} {edu.get('field','')}".strip()
-                    if degree_field:
-                        doc.add_paragraph(degree_field)
-                    if edu.get("result"):
-                        doc.add_paragraph(f"Result: {edu['result']}")
-
-            # Skills / Languages (comma separated)
-            elif section in ["Skills", "Languages"] and isinstance(content,list):
-                doc.add_paragraph(", ".join(content))
-
-            # Projects, Certificates, Positions, Achievements, or any new section
-            else:
-                if isinstance(content, list):
-                    for item in content:
-                        if isinstance(item, dict):
-                            title = item.get("title") or item.get("position") or ""
-                            company = item.get("company") or item.get("organization") or ""
-                            dates = item.get("dates") or item.get("duration") or ""
-                            description = item.get("description", "") or item.get("desc", "")
-                            responsibilities = item.get("responsibilities",[])
-                            technologies = item.get("technologies",[])
-
-                            p = doc.add_paragraph()
-                            run_main = p.add_run(title)
-                            run_main.bold = True
-                            run_main.italic = True
-                            if company:
-                                run_comp = p.add_run(f" | {company}")
-                                run_comp.bold = True
-                                run_comp.italic = True
-                            if dates:
-                                tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
-                                p.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
-                                run_date = p.add_run(f"\t{dates}")
-                                run_date.italic = True
-
-                            if description:
-                                doc.add_paragraph(description, style='List Bullet')
-                            for r in responsibilities:
-                                doc.add_paragraph(r, style='List Bullet')
-                            if technologies:
-                                doc.add_paragraph("Technologies: " + ", ".join(technologies))
-                        elif isinstance(item,str):
-                            doc.add_paragraph(item, style='List Bullet')
-                elif isinstance(content,str):
-                    doc.add_paragraph(content)
-
-    else:
-        # Plain text (like cover letter)
+    if not is_json:
         for line in text.split("\n"):
             para = doc.add_paragraph(line.strip())
             para.paragraph_format.space_after = Pt(4)
+        doc.save(filename)
+        print(f"DOCX saved as {filename}")
+        return filename
+
+    # Helper function for section headers
+    def add_section_header(title):
+        para = doc.add_paragraph()
+        run = para.add_run(title)
+        run.bold = True
+        run.font.size = Pt(14)
+        add_bottom_border(para)
+        para.paragraph_format.space_before = Pt(10)
+        para.paragraph_format.space_after = Pt(8)
+
+    # === Full Name and Location ===
+    full_name = data.get("full_name", "")
+    if full_name:
+        para = doc.add_paragraph()
+        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = para.add_run(full_name)
+        run.bold = True
+        run.font.size = Pt(16)
+
+    location = data.get("location", "")
+    if location:
+        para = doc.add_paragraph()
+        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = para.add_run(location)
+        run.font.size = Pt(10)
+
+    # === Contact Information ===
+    email = data.get("email", "")
+    phone = data.get("phone", "")
+    links = data.get("links", [])
+
+    if email or phone or links:
+        para = doc.add_paragraph()
+        para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        first = True
+        if email:
+            add_hyperlink(para, f"mailto:{email}", email)
+            first = False
+        if phone:
+            if not first:
+                para.add_run(" | ")
+            para.add_run(phone)
+            first = False
+        for link in links:
+            if not first:
+                para.add_run(" | ")
+            url = link.get("url", "")
+            name = link.get("name", url)
+            if url:
+                add_hyperlink(para, url, url)
+                first = False
+
+    # === 1. Professional Statement ===
+    prof_stmt = data.get("professional_statement", "")
+    if prof_stmt:
+        add_section_header("Professional Statement")
+        doc.add_paragraph(prof_stmt)
+
+    # Prepare conditional order for Work Experience and Education
+    work_exp = data.get("work_experience", [])
+    education = data.get("education", [])
+
+    # === 2 & 3. Work Experience or Education based on work experience count ===
+    def write_work_experience():
+        if work_exp:
+            add_section_header("Work Experience")
+            for job in work_exp:
+                job_title = job.get("job_title", "")
+                company_name = job.get("company_name", "")
+                start_date = job.get("start_date", "")
+                end_date = job.get("end_date", "")
+                dates = ""
+                if start_date and end_date:
+                    dates = f"{start_date} - {end_date}"
+                elif start_date:
+                    dates = f"{start_date} - Present"
+
+                para = doc.add_paragraph()
+                run = para.add_run(job_title)
+                run.bold = True
+                run.italic = True
+                if company_name:
+                    run_comp = para.add_run(f" | {company_name}")
+                    run_comp.bold = True
+                    run_comp.italic = True
+                if dates:
+                    tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
+                    para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                    run_date = para.add_run(f"\t{dates}")
+                    run_date.italic = True
+                
+                for resp in job.get("responsibilities", []):
+                    bullet = doc.add_paragraph(resp, style='List Bullet')
+                    bullet.paragraph_format.space_after = Pt(2)
+
+                for ach in job.get("achievements", []):
+                    bullet = doc.add_paragraph("Achievement: " + ach, style='List Bullet')
+                    bullet.paragraph_format.space_after = Pt(2)
+
+    def write_education():
+        if education:
+            add_section_header("Education")
+            for edu in education:
+                uni = edu.get("university_name", "")
+                course = edu.get("course", "")
+                discipline = edu.get("discipline", "")
+                result = edu.get("results", "")
+                start_date = edu.get("start_date", "")
+                end_date = edu.get("end_date", "")
+                dates = ""
+                if start_date and end_date:
+                    dates = f"{start_date} - {end_date}"
+                elif start_date:
+                    dates = f"{start_date} - Present"
+
+                para = doc.add_paragraph()
+                run = para.add_run(uni)
+                run.bold = True
+                run.italic = True
+                if dates:
+                    tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
+                    para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                    run_date = para.add_run(f"\t{dates}")
+                    run_date.italic = True
+
+                degree_field = f"{course} - {discipline}".strip(" -")
+                if degree_field:
+                    doc.add_paragraph(degree_field)
+                if result:
+                    doc.add_paragraph(f"Result: {result}")
+
+    if len(work_exp) > 1:
+        # Work Experience is 2nd, Education is 3rd
+        write_work_experience()
+        write_education()
+    else:
+        # Education is 2nd, Work Experience is 3rd
+        write_education()
+        write_work_experience()
+
+    # === 4. Projects, Publications or Research ===
+    projects = data.get("projects", [])
+    if projects:
+        add_section_header("Projects and Publications")
+        for proj in projects:
+            title = proj.get("title", "")
+            desc = proj.get("description", "")
+            type_ = proj.get("type", "")
+
+            para = doc.add_paragraph()
+            run = para.add_run(title)
+            run.bold = True
+            run.italic = True
+            if type_:
+                run_type = para.add_run(f" [{type_}]")
+                run_type.italic = True
+            
+            if desc:
+                doc.add_paragraph(desc, style='List Bullet')
+
+    # === 5. Skills ===
+    skills = data.get("skills", [])
+    if skills:
+        add_section_header("Skills")
+        doc.add_paragraph(", ".join(skills))
+
+    # === 6. Certifications ===
+    certs = data.get("certifications", [])
+    if certs:
+        add_section_header("Certifications and Awards")
+        for cert in certs:
+            name = cert.get("name", "")
+            organisation = cert.get("organisation", "")
+            date = cert.get("date", "")
+            type_ = cert.get("type", "")
+
+            line = f"{name}"
+            if organisation:
+                line += f", {organisation}"
+            if date:
+                line += f" ({date})"
+            if type_:
+                line += f" [{type_}]"
+
+            doc.add_paragraph(line, style='List Bullet')
+
+    # === 7. Languages ===
+    languages = data.get("languages_known", [])
+    if languages:
+        add_section_header("Languages Known")
+        doc.add_paragraph(", ".join(languages))
+
+    # === 8. Additional Sections ===
+    additional_sections = data.get("additionalSec", [])
+    for add_sec in additional_sections:
+        title = add_sec.get("title", "")
+        desc = add_sec.get("desc", "")
+        if title and desc:
+            add_section_header(title)
+            for paragraph in desc.split("\n"):
+                doc.add_paragraph(paragraph.strip())
 
     doc.save(filename)
     print(f"DOCX saved as {filename}")

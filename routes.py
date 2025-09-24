@@ -251,8 +251,9 @@ def cv_download_docx():
             return {"error": "workflow field is required"}, 400
 
         user_data = _extract_user_data(data, workflow)
-
         generated_cv = call_perplexity(cv_prompt(user_data))
+
+        print("Generated CV:\n" + generated_cv)
 
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
         tmp.close()
@@ -348,7 +349,7 @@ def _extract_user_data(data, workflow):
             "target_country": data.get("target_country"),
             "email": data.get("email"),
             "phone": data.get("phone"),
-            "linkedin": data.get("linkedin"),
+            "links": data.get("links"),
             "location": data.get("location"),
             "work_experience": data.get("work_experience", ""),
             "education": data.get("education", ""),
@@ -369,7 +370,7 @@ def _extract_user_data(data, workflow):
         return_fields["full_name"] = data.get("full_name")
         return_fields["email"] = data.get("email")
         return_fields["phone"] = data.get("phone")
-        return_fields["linkedin"] = data.get("linkedin")
+        return_fields["links"] = data.get("links")
         return_fields["location"] = data.get("location")
         return_fields["work_experience"] = data.get("work_experience", "")
         return_fields["education"] = data.get("education", "")
@@ -408,8 +409,6 @@ def upload_cv():
         info = extract_info_from_pdf(file_path)
     else:
         info = extract_info_from_docx(file_path)
-
-    print(info)
 
     return jsonify(json.loads(info)), 200
 

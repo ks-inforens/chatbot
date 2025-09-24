@@ -1,39 +1,71 @@
 def build_prompt_CV(user_data, raw_text=None):
     schema = """
 {
+  "additionalSec": [
+    {
+      "desc": "",
+      "title": ""
+    },
+    ...
+  ],
+  "certifications": [
+    {
+      "date": "", (when they obtained it)
+      "name": "",
+      "organisation": "", (name of the issuing organization)
+      "type": "" (either Certificate, Award, Scholarship or Recognition)
+    },
+    ...
+  ],
+  "education": [
+    {
+      "country": "",
+      "course": "",
+      "discipline": "",
+      "level": "", (either Undergraduate, Post graduate or PhD)
+      "location": "", (name of the city of study)
+      "region": "", 
+      "results": "",
+      "start_date": "",
+      "end_date": "",
+      "university_name": ""
+    },
+    ...
+  ],
+  "email": "",
   "full_name": "",
-  "contact": {
-    "location": "",
-    "email": "",
-    "phone": "",
-    "linkedin": ""
-  },
-  "sections": {
-    "Professional Statement": "",
-    "Work Experience": [
-      {
-        "title": "",
-        "company": "",
-        "location": "",
-        "dates": "",
-        "responsibilities": []
-      }
-    ],
-    "Education": [
-      {
-        "degree": "",
-        "course": "",
-        "institution": "",
-        "location": "",
-        "dates": "",
-        "result": ""
-      }
-    ],
-    "Skills": [],
-    "Projects": [],
-    "Certificates": []
-    "Additional sections": []
-  }
+  "languages_known": [...],
+  "links": [
+    {
+      "name": "",
+      "url": "" (in https:// format)
+    },
+    ...
+  ],
+  "location": "",
+  "phone": "",
+  "projects": [
+    {
+      "description": "",
+      "link": "",
+      "title": "",
+      "type": "" (either Project, Research or Publication)
+    },
+    ...
+  ],
+  "skills": [...],
+  "work_experience": [
+    {
+      "achievements": [...],
+      "company_name": "",
+      "start_date": "",
+      "end_date": "",
+      "job_title": "",
+      "responsibilities": [...],
+      "type_of_work": "" (either Full-time or Internship)
+    },
+    ...
+  ]
 }
 """
 
@@ -78,6 +110,7 @@ Also, write a professional summary highlighting my goals ONLY IF I have work exp
   a) Format by country - for which we need to ensure that the CV format, layout and word selection is tailored to the chosen target/preferred country.
   b) Format by company - for which we need to ensure that all experiences, word selection/terminology is tailored to the provided target company and job description. Make sure to use ATS-friendly and powerful keywords to get hired for the job description.
   c) Format by role - for which we need to ensure that all experiences, word selection/terminology is tailored to the provided target/desired role. Make sure to use ATS-friendly and powerful keywords that strongly relate to the target/desired role.
+- Strictly start and end the response with a curly bracket, do not include any other characters or text in the start or end.
 
 Schema:
 {schema}
