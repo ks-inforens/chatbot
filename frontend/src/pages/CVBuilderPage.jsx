@@ -25,7 +25,6 @@ export default function CVBuilderPage() {
         coverLetter: false,
         email: "",
         phone: "",
-        linkedInURL: "",
         location: "",
         workExperience: [],
         education: [],
@@ -33,7 +32,7 @@ export default function CVBuilderPage() {
         languagesKnown: [],
         certificates: [],
         projects: [],
-        additionalLinks: [],
+        links: [{name: "LinkedIn", url: ""}],
         additionalSec: [],
     });
 
@@ -65,10 +64,10 @@ export default function CVBuilderPage() {
             full_name: form.firstName + " " + form.lastName,
             email: form.email,
             phone: form.phone,
-            linkedin: form.linkedInURL,
             location: form.location,
             work_experience: form.workExperience || [],
             education: form.education || [],
+            links: form.links || [],
             skills: {
                 technical_skills: form.technicalSkills || [],
             },

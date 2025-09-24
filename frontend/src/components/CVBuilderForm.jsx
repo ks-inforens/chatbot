@@ -109,7 +109,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             if (parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1];
             if (parsedData.email) updatedForm.email = parsedData.email;
             if (parsedData.phone) updatedForm.phone = parsedData.phone;
-            if (parsedData.linkedin) updatedForm.linkedInURL = parsedData.linkedin;
             if (parsedData.location) updatedForm.location = parsedData.location;
 
             // Work Experience
@@ -172,6 +171,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             // Certifications
             if (parsedData.certifications && parsedData.certifications.length > 0) {
                 updatedForm.certificates = parsedData.certifications.map(cert => ({
+                    type: cert.type || '',
                     name: cert.name || cert.title || '',
                     organization: cert.organization || cert.issuer || '',
                     dateObtained: cert.date_obtained || cert.date ? formatDateForInput(cert.date_obtained || cert.date) : '',
@@ -181,9 +181,18 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             // Projects
             if (parsedData.projects && parsedData.projects.length > 0) {
                 updatedForm.projects = parsedData.projects.map(proj => ({
+                    type: proj.type || '',
                     title: proj.title || '',
                     link: proj.link || '',
                     description: proj.description || '',
+                }));
+            }
+
+            // Links
+            if (parsedData.links && parsedData.links.length > 0) {
+                updatedForm.links = parsedData.links.map(link => ({
+                    name: link.name || '',
+                    url: link.url || '',
                 }));
             }
 
@@ -224,8 +233,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     const handleUploadClick = () => {
         if (!isUploading) {
             uploadRef.current.click();
-            setParsedData(null);
-            setFormatOption("");
         }
     };
 
@@ -312,16 +319,31 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         }
     };
 
-    const handleLinkChange = (index, value) => {
-        const newLinks = [...(form.additionalLinks || [])];
-        newLinks[index] = value;
-        setForm(prev => ({ ...prev, additionalLinks: newLinks }));
+    const handleProjectSelect = (idx, key, value) => {
+        const updated = [...(form.projects || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, projects: updated }));
+        setOpenDropdown(null);
+    };
+
+    const handleCertSelect = (idx, key, value) => {
+        const updated = [...(form.certificates || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, certificates: updated }));
+        setOpenDropdown(null);
+    };
+
+    const handleLinkSelect = (idx, key, value) => {
+        const updated = [...(form.links || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, links: updated }));
+        setOpenDropdown(null);
     };
 
     const addNewLink = () => {
         setForm(prev => ({
             ...prev,
-            additionalLinks: [...(prev.additionalLinks || []), ""]
+            links: [...(prev.links || []), ""]
         }));
     };
 
@@ -636,7 +658,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                     {(!parsedData || (parsedData && formatOption === "country")) && (
                         <div className="flex flex-col gap-2">
                             <label className="text-sm px-2 mb-1">
-                                Preferred Country<span className="text-orange-600">*</span>
+                                Target Country<span className="text-orange-600">*</span>
                             </label>
                             <SearchDropdown
                                 label={form.targetCountry || "Select"}
@@ -790,30 +812,22 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                         </div>
                         <div className="flex flex-col gap-4">
                             <h3 className="font-medium border-b border-black/15 pb-1 px-1">Additional Links</h3>
-                            <div className="flex flex-col gap-6">
-                                <div className="flex flex-col gap-2 px-1">
-                                    <label className="text-sm mb-1">
-                                        LinkedIn URL
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="linkedInURL"
-                                        value={form.linkedInURL || ""}
-                                        onChange={handleChange}
-                                        placeholder="https://linkedin.com/in/yourprofile"
-                                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                    />
-                                    {renderFieldError("linkedInURL")}
-                                </div>
-
-                                {/* Additional Links */}
-                                {(form.additionalLinks || []).map((link, idx) => (
-                                    <div className="relative flex gap-4">
+                            <div className="flex flex-col gap-4">
+                                {(form.links || []).map((link, idx) => (
+                                    <div key={idx} className="relative flex gap-4">
+                                        <SearchDropdown
+                                            label={link.name || "Select"}
+                                            isOpen={openDropdown === `link${idx}`}
+                                            onToggle={() => toggleDropdown(`link${idx}`)}
+                                            options={options["urls"].map(s => ({ id: s, name: s }))}
+                                            selectedOptions={link.name ? [link.name] : []}
+                                            onOptionToggle={id => handleLinkSelect(idx, "name", id)}
+                                            className="w-full md:max-w-100"
+                                        />
                                         <input
-                                            key={idx}
                                             type="url"
-                                            value={link}
-                                            onChange={e => handleLinkChange(idx, e.target.value)}
+                                            value={link.url}
+                                            onChange={e => handleLinkSelect(idx, "url", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                             placeholder="Add URL"
                                         />
@@ -821,19 +835,19 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const removeLinks = [...(form.additionalLinks || [])];
+                                                    const removeLinks = [...(form.links || [])];
                                                     removeLinks.splice(idx, 1)
-                                                    setForm((prev) => ({ ...prev, additionalLinks: removeLinks }));
+                                                    setForm((prev) => ({ ...prev, links: removeLinks }));
                                                 }} className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
                                                 Remove
                                             </button>
                                         </div>
                                     </div>
                                 ))}
-                                <button type="button" onClick={addNewLink} className="h-10 w-32 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
-                                    + Add more
-                                </button>
                             </div>
+                            <button type="button" onClick={addNewLink} className="mt-2 h-10 w-32 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
+                                + Add more
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -842,103 +856,101 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold mb-4">Work Experience</h2>
                     <div>
-                        {
-                            (form.workExperience || []).map((w, i) => (
-                                <div key={i} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
-                                    <div className="flex justify-end absolute top-2 right-2">
-                                        <button type="button" onClick={() => removeWorkExperience(i)} className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">Remove</button>
+                        {(form.workExperience || []).map((w, i) => (
+                            <div key={i} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
+                                <div className="flex justify-end absolute top-2 right-2">
+                                    <button type="button" onClick={() => removeWorkExperience(i)} className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">Remove</button>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Type of Work<span className="text-orange-600">*</span></label>
+                                        <select
+                                            value={w.type}
+                                            onChange={e => updateWorkExperience(i, "type", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        >
+                                            <option value="">Type of Work</option>
+                                            {options["workTypes"].map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                        {renderFieldError(`workExperience.${i}.type`)}
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Type of Work<span className="text-orange-600">*</span></label>
-                                            <select
-                                                value={w.type}
-                                                onChange={e => updateWorkExperience(i, "type", e.target.value)}
-                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                            >
-                                                <option value="">Type of Work</option>
-                                                {options["workTypes"].map(t => <option key={t} value={t}>{t}</option>)}
-                                            </select>
-                                            {renderFieldError(`workExperience.${i}.type`)}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Job Title<span className="text-orange-600">*</span></label>
-                                            <input
-                                                type="text"
-                                                value={w.jobTitle}
-                                                onChange={e => updateWorkExperience(i, "jobTitle", e.target.value)}
-                                                placeholder="Job Title"
-                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                            />
-                                            {renderFieldError(`workExperience.${i}.jobTitle`)}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Company<span className="text-orange-600">*</span></label>
-                                            <input
-                                                type="text"
-                                                value={w.companyName}
-                                                onChange={e => updateWorkExperience(i, "companyName", e.target.value)}
-                                                placeholder="Company"
-                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                            />
-                                            {renderFieldError(`workExperience.${i}.companyName`)}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Period<span className="text-orange-600">*</span></label>
-                                            <input
-                                                type="date"
-                                                value={w.startDate}
-                                                onChange={e => updateWorkExperience(i, "startDate", e.target.value)}
-                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                            />
-                                            {renderFieldError(`workExperience.${i}.startDate`)}
-                                            <input
-                                                type="date"
-                                                value={w.endDate}
-                                                disabled={w.isPresent}
-                                                onChange={e => updateWorkExperience(i, "endDate", e.target.value)}
-                                                className={`w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg ${w.isPresent ? "bg-black/5 text-black/30" : "bg-none text-black/80"}`}
-                                            />
-                                            {renderFieldError(`workExperience.${i}.endDate`)}
-                                            <div className="flex items-center gap-2 px-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id={`present-work-${i}`}
-                                                    checked={w.isPresent || false}
-                                                    onChange={e => updateWorkExperience(i, "isPresent", e.target.checked)}
-                                                    className="accent-[#db5800]"
-                                                />
-                                                <label htmlFor={`present-work-${i}`} className="text-sm">Present</label>
-                                            </div>
-                                        </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Job Title<span className="text-orange-600">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={w.jobTitle}
+                                            onChange={e => updateWorkExperience(i, "jobTitle", e.target.value)}
+                                            placeholder="Job Title"
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                        {renderFieldError(`workExperience.${i}.jobTitle`)}
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Responsibilities<span className="text-orange-600">*</span></label>
-                                            <textarea
-                                                value={w.responsibilities}
-                                                onChange={e => updateWorkExperience(i, "responsibilities", e.target.value)}
-                                                className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
-                                                placeholder="Responsibilities"
-                                                rows={4}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Company<span className="text-orange-600">*</span></label>
+                                        <input
+                                            type="text"
+                                            value={w.companyName}
+                                            onChange={e => updateWorkExperience(i, "companyName", e.target.value)}
+                                            placeholder="Company"
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                        {renderFieldError(`workExperience.${i}.companyName`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Period<span className="text-orange-600">*</span></label>
+                                        <input
+                                            type="date"
+                                            value={w.startDate}
+                                            onChange={e => updateWorkExperience(i, "startDate", e.target.value)}
+                                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                        {renderFieldError(`workExperience.${i}.startDate`)}
+                                        <input
+                                            type="date"
+                                            value={w.endDate}
+                                            disabled={w.isPresent}
+                                            onChange={e => updateWorkExperience(i, "endDate", e.target.value)}
+                                            className={`w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg ${w.isPresent ? "bg-black/5 text-black/30" : "bg-none text-black/80"}`}
+                                        />
+                                        {renderFieldError(`workExperience.${i}.endDate`)}
+                                        <div className="flex items-center gap-2 px-2">
+                                            <input
+                                                type="checkbox"
+                                                id={`present-work-${i}`}
+                                                checked={w.isPresent || false}
+                                                onChange={e => updateWorkExperience(i, "isPresent", e.target.checked)}
+                                                className="accent-[#db5800]"
                                             />
-                                            {renderFieldError(`workExperience.${i}.responsibilities`)}
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-sm mb-1">Achievements</label>
-                                            <textarea
-                                                value={w.achievements}
-                                                onChange={e => updateWorkExperience(i, "achievements", e.target.value)}
-                                                placeholder="Achievements"
-                                                className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
-                                                rows={4}
-                                            />
-                                            {renderFieldError(`workExperience.${i}.achievements`)}
+                                            <label htmlFor={`present-work-${i}`} className="text-sm">Present</label>
                                         </div>
                                     </div>
                                 </div>
-                            ))
-                        }
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Responsibilities<span className="text-orange-600">*</span></label>
+                                        <textarea
+                                            value={w.responsibilities}
+                                            onChange={e => updateWorkExperience(i, "responsibilities", e.target.value)}
+                                            className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
+                                            placeholder="Responsibilities"
+                                            rows={4}
+                                        />
+                                        {renderFieldError(`workExperience.${i}.responsibilities`)}
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">Achievements</label>
+                                        <textarea
+                                            value={w.achievements}
+                                            onChange={e => updateWorkExperience(i, "achievements", e.target.value)}
+                                            placeholder="Achievements"
+                                            className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
+                                            rows={4}
+                                        />
+                                        {renderFieldError(`workExperience.${i}.achievements`)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                     <button type="button" onClick={addWorkExperience} className="h-10 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer">
                         + Add experience
@@ -1191,7 +1203,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
                 {/* Certificates and Awards */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4">Certificates and Awards</h2>
+                    <h2 className="text-xl font-semibold mb-4">Certificates, Awards, Scholarships or Recognitions</h2>
                     {(form.certificates || []).map((cert, idx) => (
                         <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
                             <div className="flex justify-end absolute top-2 right-2">
@@ -1210,13 +1222,26 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">
-                                        Certificate Name<span className="text-orange-600">*</span>
+                                        Type<span className="text-orange-600">*</span>
+                                    </label>
+                                    <SearchDropdown
+                                        label={cert.type || "Select one..."}
+                                        isOpen={openDropdown === `certType${idx}`}
+                                        onToggle={() => toggleDropdown(`certType${idx}`)}
+                                        options={options["certificationTypes"].map(s => ({ id: s, name: s }))}
+                                        selectedOptions={cert.type ? [cert.type] : []}
+                                        onOptionToggle={id => handleCertSelect(idx, "type", id)}
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm mb-1">
+                                        Name<span className="text-orange-600">*</span>
                                     </label>
                                     <input
                                         type="text"
                                         name="certificateName"
                                         value={cert.name || ""}
-                                        placeholder="Certificate Name"
+                                        placeholder="Certification Name"
                                         onChange={e => {
                                             const updated = [...(form.certificates || [])];
                                             updated[idx] = { ...updated[idx], name: e.target.value };
@@ -1277,7 +1302,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
                 {/* Projects */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4">Projects</h2>
+                    <h2 className="text-xl font-semibold mb-4">Projects, Research or Publications</h2>
                     {(form.projects || []).map((proj, idx) => (
                         <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
                             <div className="flex justify-end absolute top-2 right-2">
@@ -1293,7 +1318,20 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     Remove
                                 </button>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 mb-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm mb-1">
+                                        Type<span className="text-orange-600">*</span>
+                                    </label>
+                                    <SearchDropdown
+                                        label={proj.type || "Select one..."}
+                                        isOpen={openDropdown === `projType${idx}`}
+                                        onToggle={() => toggleDropdown(`projType${idx}`)}
+                                        options={options["projectTypes"].map(s => ({ id: s, name: s }))}
+                                        selectedOptions={proj.type ? [proj.type] : []}
+                                        onOptionToggle={id => handleProjectSelect(idx, "type", id)}
+                                    />
+                                </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">
                                         Project Title<span className="text-orange-600">*</span>

@@ -60,8 +60,16 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         <dd className="text-base">{form.location || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">LinkedIn URL</dt>
-                        <dd className="text-base">{form.linkedInURL || "N/A"}</dd>
+                        <dt className="text-gray-500 text-sm">Links</dt>
+                        {(form.links || []).length > 0 ? (
+                            form.links.map((link, idx) => (
+                                <div key={idx}>
+                                    <p className="text-sm"><span className="font-medium">{link.name}:</span> <a target="_blank" className="text-orange-700 underline" href={link.url}>{link.url}</a></p>
+                                </div>
+                            ))
+                        ) : (
+                            <span>N/A</span>
+                        )}
                     </div>
                 </div>
 
@@ -93,7 +101,7 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                                         <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
                                         {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
                                         <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
-                                        <p className="text-sm">{edu.results && edu.results}</p>
+                                        <p className="text-sm">Results/Grades: {edu.results && edu.results}</p>
                                     </div>
                                 ))
                             ) : (
@@ -115,12 +123,12 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         </div>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Certificates and Awards</dt>
+                        <dt className="text-gray-500 text-sm">Certificate, Award, Scholarship or Recognition</dt>
                         <dd className="flex flex-col gap-2 text-base">
                             {(form.certificates || []).length > 0 ? (
                                 form.certificates.map((cert, idx) => (
                                     <div key={idx}>
-                                        <h1 className="text-sm font-medium">{cert.name}</h1>
+                                        <h1 className="text-sm"><span className="font-medium">{cert.type}: </span>{cert.name}</h1>
                                         <p className="text-sm italic">{cert.organization}{cert.organization && cert.dateObtained ? ", " : ""}{cert.dateObtained}</p>
                                     </div>
                                 ))
@@ -130,12 +138,12 @@ export default function CVBuilderReviewStage({ form, onEdit, onSubmit, headerInc
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Projects</dt>
+                        <dt className="text-gray-500 text-sm">Projects, Research or Publication</dt>
                         <dd className="flex flex-col gap-2 text-base">
                             {(form.projects || []).length > 0 ? (
                                 form.projects.map((p, idx) => (
                                     <div key={idx}>
-                                        <h1 className="text-sm font-semibold">{p.title}</h1>
+                                        <h1 className="text-sm font-semibold">{p.title} - {p.type}</h1>
                                         <p className="text-sm">{p.description}</p>
                                         {p.link && (
                                             <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-sm italic underline">
