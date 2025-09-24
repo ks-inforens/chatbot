@@ -109,7 +109,6 @@ def build_sop_prompt(user_inputs):
         ("why_field", "I want to pursue this field because"),
         ("why_uni", "And this university because"),
         ("goals", "My long term goals are"),
-        ("hobbies", "I like to"),
         ("challenge", "More about me:")
     ]
 
@@ -119,9 +118,10 @@ def build_sop_prompt(user_inputs):
             base_prompt += f"{label} {value}.\n"
 
     if len(user_inputs.get("projects")) > 0:
-        base_prompt += "I have also completed these projects:\n"
+        base_prompt += "I have also completed these projects/research/publications:\n"
         for p in user_inputs.get("projects"):
-            base_prompt += (f"Title: {p.get("title")}\n"
+            base_prompt += (f"Type: {p.get("type")}\n"
+                            f"Title: {p.get("title")}\n"
                             f"Link: {p.get("link")}\n"         
                             f"Description: {p.get("description")}\n\n"   
                             )
@@ -145,12 +145,18 @@ def build_sop_prompt(user_inputs):
                             )
             
     if len(user_inputs.get("awards")) > 0:
-        base_prompt += "I have received these awards:\n"
+        base_prompt += "I have received these certifications:\n"
         for p in user_inputs.get("awards"):
-            base_prompt += (f"Name: {p.get("name")}\n"
+            base_prompt += (f"Type of certification: {p.get("type")}\n"
+                            f"Name: {p.get("name")}\n"
                             f"Issuing Organization: {p.get("organization")}\n"         
                             f"Date obtained: {p.get("dateObtained")}\n\n"   
                             )
+            
+    if len(user_inputs.get("activity")) > 0:
+        base_prompt += "Here is more information about the activities I did:\n"
+        for p in user_inputs.get("activity"):
+            base_prompt += (f"{p.get("type")}: {p.get("description")}")
         
     return base_prompt.strip()
 
