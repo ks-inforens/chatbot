@@ -30,7 +30,7 @@ export default function SOPBuilderPage() {
         projectsResearch: [],
         awards: [],
         longTermGoals: "",
-        hobbies: "",
+        activity: [],
         challenge: "",
     });
 
@@ -62,7 +62,7 @@ export default function SOPBuilderPage() {
             projects: form.projectsResearch,
             awards: form.awards,
             goals: form.longTermGoals,
-            hobbies: form.hobbies,
+            activity: form.activity,
             challenge: form.challenge,
         };
 

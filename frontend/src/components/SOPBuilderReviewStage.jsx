@@ -17,15 +17,15 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base">{form.firstName && form.lastName ? form.firstName + " " + form.lastName : "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Country of Origin</dt>
+                        <dt className="text-gray-500 text-sm">Citizenship</dt>
                         <dd className="text-base">{form.countryOfOrigin || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Intended Degree</dt>
+                        <dt className="text-gray-500 text-sm">Level</dt>
                         <dd className="text-base">{form.intendedDegree || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Preferred Field of Study</dt>
+                        <dt className="text-gray-500 text-sm">Target Field</dt>
                         <dd className="text-base">{form.preferredFieldOfStudy || "N/A"}</dd>
                     </div>
                     <div>
@@ -35,9 +35,9 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                                 form.education.map((edu, idx) => (
                                     <div key={idx}>
                                         <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
-                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
+                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.isPresent ? "Present" : edu.endDate}</h2>}
                                         <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
-                                        <p className="text-sm">{edu.results && edu.results}</p>
+                                        <p className="text-sm">Results/Grades: {edu.results && edu.results}</p>
                                     </div>
                                 ))
                             ) : (
@@ -54,11 +54,11 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                 {/* Right column */}
                 <div className="flex flex-col gap-4">
                     <div>
-                        <dt className="text-gray-500 text-sm">Preferred Country of Study</dt>
+                        <dt className="text-gray-500 text-sm">Target Country</dt>
                         <dd className="text-base">{form.preferredCountryOfStudy || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Preferred University</dt>
+                        <dt className="text-gray-500 text-sm">Target University</dt>
                         <dd className="text-base">{form.preferredUniversity || "N/A"}</dd>
                     </div>
                     <div>
@@ -74,12 +74,12 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base whitespace-pre-line">{form.whyUniversity || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Projects / Research / Publications</dt>
+                        <dt className="text-gray-500 text-sm">Projects, Research or Publications</dt>
                         <dd className="flex flex-col gap-2">
                             {(form.projectsResearch || []).length > 0 ? (
                                 form.projectsResearch.map((p, idx) => (
                                     <div key={idx}>
-                                        <h1 className="text-sm font-semibold">{p.title}</h1>
+                                        <h1 className="text-sm font-semibold">{p.title} - {p.type}</h1>
                                         <p className="text-sm">{p.description}</p>
                                         {p.link && (
                                             <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-sm italic underline">
@@ -94,12 +94,12 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         </dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Awards / Scholarships / Recognitions</dt>
+                        <dt className="text-gray-500 text-sm">Certificates, Awards, Scholarships or Recognitions</dt>
                         <dd className="flex flex-col gap-2">
                             {(form.awards || []).length > 0 ? (
                                 form.awards.map((cert, idx) => (
                                     <div key={idx}>
-                                        <h1 className="text-sm font-medium">{cert.name}</h1>
+                                        <h1 className="text-sm font-semibold">{cert.name} - {cert.type}</h1>
                                         <p className="text-sm italic">{cert.organization}{cert.organization && cert.dateObtained ? ", " : ""}{cert.dateObtained}</p>
                                     </div>
                                 ))
@@ -113,8 +113,19 @@ export default function SOPBuilderReviewStage({ form, onEdit, onSubmit }) {
                         <dd className="text-base whitespace-pre-line">{form.longTermGoals || "N/A"}</dd>
                     </div>
                     <div>
-                        <dt className="text-gray-500 text-sm">Hobbies / Volunteer Work / Extracurriculars</dt>
-                        <dd className="text-base whitespace-pre-line">{form.hobbies || "N/A"}</dd>
+                        <dt className="text-gray-500 text-sm">Hobbies, Volunteer Work or Extracurriculars</dt>
+                        <dd className="flex flex-col gap-2">
+                            {(form.activity || []).length > 0 ? (
+                                form.activity.map((a, idx) => (
+                                    <div key={idx}>
+                                        <h1 className="text-sm font-semibold">{a.type}</h1>
+                                        <p className="text-sm italic">{a.description}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <span>N/A</span>
+                            )}
+                        </dd>
                     </div>
                     <div>
                         <dt className="text-gray-500 text-sm">A Time You Overcame a Challenge</dt>

@@ -4,9 +4,10 @@ export const sopOptions = {
   regions: ["Any", "Other"],
   fields: ["Engineering", "Arts", "Science", "Business"],
   universities: ["Harvard", "Oxford", "MIT", "Stanford"],
-  tones: ["Formal", "Informal", "Professional", "Friendly"],
   keySkills: ["Communication", "Leadership", "Research", "Critical Thinking", "Problem Solving"],
-  graduationYears: Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i),
+  projectTypes: ["Project", "Research", "Publication"],
+  certificationTypes: ["Certificate", "Award", "Scholarship", "Recognition"],
+  activityType: ["Hobbies", "Volunteer Work", "Extracurriculars"],
 };
 
 export const sopQuestions = [

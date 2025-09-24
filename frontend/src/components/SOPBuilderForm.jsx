@@ -1,9 +1,26 @@
 import React, { useState } from "react";
 import { sopOptions as options } from "../data/sopBuilderData";
+import SearchDropdown from "./SearchDropdown";
 
 export default function SOPBuilderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
     const [validationErrors, setValidationErrors] = useState({});
+    const [countrySearch, setCountrySearch] = useState("");
+    const [universitySearch, setUniversitySearch] = useState("");
+    const [skillsSearch, setSkillsSearch] = useState("");
+    const [openDropdown, setOpenDropdown] = useState(null);
+
+    const filteredCountries = options["countries"].filter(c =>
+        c.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+
+    const filteredUnis = options["universities"].filter(c =>
+        c.toLowerCase().includes(universitySearch.toLowerCase())
+    );
+
+    const filteredSkills = options["keySkills"].filter(c =>
+        c.toLowerCase().includes(skillsSearch.toLowerCase())
+    );
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -100,6 +117,45 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
         setForm(prev => ({ ...prev, education: updated }));
     };
 
+    const handleSelect = (name, value) => {
+        setForm(prev => ({ ...prev, [name]: value }));
+        setOpenDropdown(null);
+
+        // Clear validation error for this field
+        if (validationErrors[name]) {
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
+    };
+
+    const handleProjectSelect = (idx, key, value) => {
+        const updated = [...(form.projectsResearch || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, projectsResearch: updated }));
+        setOpenDropdown(null);
+    };
+
+    const handleCertSelect = (idx, key, value) => {
+        const updated = [...(form.awards || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, awards: updated }));
+        setOpenDropdown(null);
+    };
+
+    const handleActivitySelect = (idx, key, value) => {
+        const updated = [...(form.activity || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, activity: updated }));
+        setOpenDropdown(null);
+    };
+
+    const toggleDropdown = (name) => {
+        setOpenDropdown(openDropdown === name ? null : name);
+    };
+
     const handleSelectChange = (i, e) => {
         const value = e.target.value;
         if (value === "Other") {
@@ -186,95 +242,79 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                         <label className="text-sm mb-1">
                             Citizenship<span className="text-orange-600">*</span>
                         </label>
-                        <select
-                            name="countryOfOrigin"
-                            value={form.countryOfOrigin || ""}
-                            onChange={handleChange}
-                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                        >
-                            <option value="">Select country</option>
-                            {options["countries"].map((c) => (
-                                <option key={c} value={c}>
-                                    {c}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchDropdown
+                            label={form.countryOfOrigin || "Select country of citizenship..."}
+                            isOpen={openDropdown === "countryOfOrigin"}
+                            onToggle={() => toggleDropdown("countryOfOrigin")}
+                            searchable
+                            searchValue={countrySearch}
+                            onSearchChange={e => setCountrySearch(e.target.value)}
+                            options={filteredCountries.map(c => ({ id: c, name: c }))}
+                            selectedOptions={form.countryOfOrigin ? [form.countryOfOrigin] : []}
+                            onOptionToggle={id => handleSelect("countryOfOrigin", id)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm mb-1">
-                            Preferred Country<span className="text-orange-600">*</span>
+                            Target Country<span className="text-orange-600">*</span>
                         </label>
-                        <select
-                            name="preferredCountryOfStudy"
-                            value={form.preferredCountryOfStudy || ""}
-                            onChange={handleChange}
-                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                        >
-                            <option value="">Select country</option>
-                            {options["countries"].map((c) => (
-                                <option key={c} value={c}>
-                                    {c}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchDropdown
+                            label={form.preferredCountryOfStudy || "Select target country..."}
+                            isOpen={openDropdown === "preferredCountryOfStudy"}
+                            onToggle={() => toggleDropdown("preferredCountryOfStudy")}
+                            searchable
+                            searchValue={countrySearch}
+                            onSearchChange={e => setCountrySearch(e.target.value)}
+                            options={filteredCountries.map(c => ({ id: c, name: c }))}
+                            selectedOptions={form.preferredCountryOfStudy ? [form.preferredCountryOfStudy] : []}
+                            onOptionToggle={id => handleSelect("preferredCountryOfStudy", id)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm mb-1">
-                            Preferred University<span className="text-orange-600">*</span>
+                            Target University<span className="text-orange-600">*</span>
                         </label>
-                        <select
-                            name="preferredUniversity"
-                            value={form.preferredUniversity || ""}
-                            onChange={handleChange}
-                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                        >
-                            <option value="">Select university</option>
-                            {options["universities"].map((u) => (
-                                <option key={u} value={u}>
-                                    {u}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchDropdown
+                            label={form.preferredUniversity || "Select university..."}
+                            isOpen={openDropdown === "preferredUniversity"}
+                            onToggle={() => toggleDropdown("preferredUniversity")}
+                            searchable
+                            searchValue={universitySearch}
+                            onSearchChange={e => setUniversitySearch(e.target.value)}
+                            options={filteredUnis.map(c => ({ id: c, name: c }))}
+                            selectedOptions={form.preferredUniversity ? [form.preferredUniversity] : []}
+                            onOptionToggle={id => handleSelect("preferredUniversity", id)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm mb-1">
                             Level<span className="text-orange-600">*</span>
                         </label>
-                        <select
-                            name="intendedDegree"
-                            value={form.intendedDegree || ""}
-                            onChange={handleChange}
-                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                        >
-                            <option value="">Select your level</option>
-                            {options["studyLevels"].map((level) => (
-                                <option key={level} value={level}>
-                                    {level}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchDropdown
+                            label={form.intendedDegree || "Select level..."}
+                            isOpen={openDropdown === "intendedDegree"}
+                            onToggle={() => toggleDropdown("intendedDegree")}
+                            options={options["studyLevels"].map(s => ({ id: s, name: s }))}
+                            selectedOptions={form.intendedDegree ? [form.intendedDegree] : []}
+                            onOptionToggle={id => handleSelect("intendedDegree", id)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm mb-1">
-                            Preferred Field<span className="text-orange-600">*</span>
+                            Target Field<span className="text-orange-600">*</span>
                         </label>
-                        <select
-                            name="preferredFieldOfStudy"
-                            value={form.preferredFieldOfStudy || ""}
-                            onChange={handleChange}
-                            className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                        >
-                            <option value="">Select your field</option>
-                            {options["fields"].map((f) => (
-                                <option key={f} value={f}>
-                                    {f}
-                                </option>
-                            ))}
-                        </select>
+                        <SearchDropdown
+                            label={form.preferredFieldOfStudy || "Select field..."}
+                            isOpen={openDropdown === "preferredFieldOfStudy"}
+                            onToggle={() => toggleDropdown("preferredFieldOfStudy")}
+                            options={options["fields"].map(s => ({ id: s, name: s }))}
+                            selectedOptions={form.preferredFieldOfStudy ? [form.preferredFieldOfStudy] : []}
+                            onOptionToggle={id => handleSelect("preferredFieldOfStudy", id)}
+                        />
                     </div>
                 </div>
 
@@ -482,19 +522,17 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                     <div className="grid grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
                             <label className="text-xs mb-1">Skills<span className="text-orange-600">*</span></label>
-                            <select
-                                name="keySkills"
-                                value={form.keySkills || ""}
-                                onChange={handleChange}
-                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                            >
-                                <option value="">Select skills</option>
-                                {options["keySkills"].map((s) => (
-                                    <option key={s} value={s}>
-                                        {s}
-                                    </option>
-                                ))}
-                            </select>
+                            <SearchDropdown
+                                label={form.keySkills || "Select skills..."}
+                                isOpen={openDropdown === "keySkills"}
+                                onToggle={() => toggleDropdown("keySkills")}
+                                searchable
+                                searchValue={skillsSearch}
+                                onSearchChange={e => setSkillsSearch(e.target.value)}
+                                options={filteredSkills.map(c => ({ id: c, name: c }))}
+                                selectedOptions={form.keySkills ? [form.keySkills] : []}
+                                onOptionToggle={id => handleSelect("keySkills", id)}
+                            />
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -536,7 +574,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs mb-1">Projects / Research / Publications</label>
+                        <label className="text-xs mb-1">Projects, Research or Publications</label>
                         {(form.projectsResearch || []).map((proj, idx) => (
                             <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
                                 <div className="flex justify-end absolute top-2 right-2">
@@ -552,7 +590,20 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                         Remove
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 mb-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Type<span className="text-orange-600">*</span>
+                                        </label>
+                                        <SearchDropdown
+                                            label={proj.type || "Select one..."}
+                                            isOpen={openDropdown === `projType${idx}`}
+                                            onToggle={() => toggleDropdown(`projType${idx}`)}
+                                            options={options["projectTypes"].map(s => ({ id: s, name: s }))}
+                                            selectedOptions={proj.type ? [proj.type] : []}
+                                            onOptionToggle={id => handleProjectSelect(idx, "type", id)}
+                                        />
+                                    </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">
                                             Title<span className="text-orange-600">*</span>
@@ -610,7 +661,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                             onClick={() => {
                                 setForm((prev) => ({
                                     ...prev,
-                                    projectsResearch: [...(prev.projectsResearch || []), { title: "", description: "", link: "" }],
+                                    projectsResearch: [...(prev.projectsResearch || []), { type: "", title: "", description: "", link: "" }],
                                 }));
                             }}
                             className="h-10 max-w-24 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
@@ -620,7 +671,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs mb-1">Awards / Scholarships / Recognitions</label>
+                        <label className="text-xs mb-1">Certificates, Awards, Scholarships or Recognitions</label>
                         {(form.awards || []).map((cert, idx) => (
                             <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
                                 <div className="flex justify-end absolute top-2 right-2">
@@ -637,6 +688,19 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     </button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Type<span className="text-orange-600">*</span>
+                                        </label>
+                                        <SearchDropdown
+                                            label={cert.type || "Select one..."}
+                                            isOpen={openDropdown === `certType${idx}`}
+                                            onToggle={() => toggleDropdown(`certType${idx}`)}
+                                            options={options["certificationTypes"].map(s => ({ id: s, name: s }))}
+                                            selectedOptions={cert.type ? [cert.type] : []}
+                                            onOptionToggle={id => handleCertSelect(idx, "type", id)}
+                                        />
+                                    </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">
                                             Award Name<span className="text-orange-600">*</span>
@@ -695,7 +759,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                             onClick={() => {
                                 setForm((prev) => ({
                                     ...prev,
-                                    awards: [...(prev.awards || []), { name: "", organization: "", dateObtained: "" }],
+                                    awards: [...(prev.awards || []), { type: "", name: "", organization: "", dateObtained: "" }],
                                 }));
                             }}
                             className="h-10 px-4 max-w-24 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
@@ -717,15 +781,69 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs mb-1">Hobbies / Volunteer Work / Extracurriculars</label>
-                        <textarea
-                            name="hobbies"
-                            value={form.hobbies || ""}
-                            onChange={handleChange}
-                            placeholder="Description"
-                            rows={3}
-                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                        />
+                        <label className="text-xs mb-1">Hobbies, Volunteer Work or Extracurriculars</label>
+                        {(form.activity || []).map((a, idx) => (
+                            <div key={idx} className="relative border border-black/5 shadow-sm inset-shadow-xs p-6 rounded-2xl mb-4">
+                                <div className="flex justify-end absolute top-2 right-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const updated = [...(form.activity || [])];
+                                            updated.splice(idx, 1);
+                                            setForm((prev) => ({ ...prev, activity: updated }));
+                                        }}
+                                        className="h-8 px-4 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 gap-y-4 gap-x-6 mb-4">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Type<span className="text-orange-600">*</span>
+                                        </label>
+                                        <SearchDropdown
+                                            label={a.type || "Select one..."}
+                                            isOpen={openDropdown === `typeOfActivity${idx}`}
+                                            onToggle={() => toggleDropdown(`typeOfActivity${idx}`)}
+                                            options={options["activityType"].map(s => ({ id: s, name: s }))}
+                                            selectedOptions={a.type ? [a.type] : []}
+                                            onOptionToggle={id => handleActivitySelect(idx, "type", id)}
+                                            className="md:max-w-100"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-sm mb-1">
+                                            Description<span className="text-orange-600">*</span>
+                                        </label>
+                                        <textarea
+                                            name="description"
+                                            value={a.description || ""}
+                                            onChange={e => {
+                                                const updated = [...(form.activity || [])];
+                                                updated[idx] = { ...updated[idx], description: e.target.value };
+                                                setForm(prev => ({ ...prev, activity: updated }));
+                                            }}
+                                            placeholder="Description"
+                                            rows={3}
+                                            className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setForm((prev) => ({
+                                    ...prev,
+                                    activity: [...(prev.activity || []), { type: "", description: "" }],
+                                }));
+                            }}
+                            className="h-10 px-4 max-w-24 bg-[#db5800] hover:bg-[#c85000] text-sm font-semibold text-white rounded-full cursor-pointer"
+                        >
+                            + Add
+                        </button>
                     </div>
 
                     <div className="flex flex-col gap-2">
