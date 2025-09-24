@@ -22,8 +22,9 @@ def build_prompt_CV(user_data, raw_text=None):
     "Education": [
       {
         "degree": "",
-        "field": "",
+        "course": "",
         "institution": "",
+        "location": "",
         "dates": "",
         "result": ""
       }
