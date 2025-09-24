@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ScholarshipFinderForm from "../components/ScholarshipFinderForm";
 import ReviewStage from "../components/ScholarshipReviewStage";
-import { Search } from "lucide-react";
+import { Award, Search } from "lucide-react";
 import { API_BASE_URL } from "../data/api";
 
 function ScholarshipResults({ scholarships, error, onBack }) {
@@ -27,50 +27,40 @@ function ScholarshipResults({ scholarships, error, onBack }) {
             Here are some of the scholarships you can apply to...
           </p>
 
+          <button
+            onClick={onBack}
+            className="text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-black/5 rounded-2xl hover:bg-black/10 mb-6 cursor-pointer"
+          >
+            <Search className="inline w-4 h-4" />
+            Find Again
+          </button>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {scholarships.map((scholarship, i) => {
               const title = scholarship.name || "Scholarship Name";
               const description = scholarship.description || "Description not available.";
+              const deadline = scholarship.deadline || "No deadline.";
 
               return (
                 <div
                   key={i}
-                  className="flex gap-4 rounded-lg border border-orange-600/30 hover:shadow-sm transition overflow-hidden"
+                  className="flex flex-col gap-4 rounded-lg border border-orange-600/30 hover:shadow-sm transition overflow-hidden"
                 >
                   {/* Icon area */}
-                  <div className="flex items-center justify-center w-16 bg-orange-100">
-                    <svg
-                      className="w-10 h-10 text-orange-600"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 12h6m2 0a2 2 0 11-4 0 2 2 0 014 0zM12 2v20m4-6v6a2 2 0 01-4 0v-6"
-                      ></path>
-                    </svg>
+                  <div className="flex flex-col py-4 gap-2 items-center justify-center bg-orange-100">
+                    <Award className="w-8 h-8 text-orange-600" />
+                    <h3 className="text-center text-base font-semibold text-gray-900">{title.trim()}</h3>
                   </div>
 
                   {/* Content area */}
-                  <div className="flex flex-col gap-1 flex-1 py-6 px-6">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">{title.trim()}</h3>
+                  <div className="flex flex-col gap-4 py-6 px-6">
                     <p className="text-sm text-gray-600">{description.trim()}</p>
+                    <p className="text-sm text-gray-600 font-medium">Deadline: {deadline.trim()}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <button
-            className="px-10 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 cursor-pointer text-gray-800 transition"
-            onClick={onBack}
-          >
-            Find Again
-          </button>
         </>
       )}
 
@@ -102,6 +92,7 @@ export default function ScholarshipFinderPage() {
     dob: "",
     gender: "",
     genderDetails: "",
+    typeOfActivity: "Extracurriculars",
     extracurricular: "",
     education: [],
   });
@@ -120,7 +111,7 @@ export default function ScholarshipFinderPage() {
       field: form.field,
       course_intake: form.intake || null,
       academic_perf: form.education || [],
-      dob: form.dob || null,  
+      dob: form.dob || null,
       gender: form.gender || null,
       disability:
         form.disability === "Yes"
@@ -128,6 +119,7 @@ export default function ScholarshipFinderPage() {
           : form.disability === "No"
             ? "No"
             : null,
+      activity_type: form.typeOfActivity || "Extracurriculars",
       extracurricular: form.extracurricular || null,
     };
   };

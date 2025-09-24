@@ -1,3 +1,5 @@
+const currentYear = new Date().getFullYear();
+
 export const options = {
   countries: ["India", "United States", "United Kingdom", "Australia", "Canada"],
   studyLevels: ["Undergraduate", "Post Graduate", "PhD"],
@@ -6,6 +8,8 @@ export const options = {
   universities: ["Harvard", "Oxford", "MIT", "Stanford"],
   disabilityOptions: ["Yes", "No"],
   genders: ["Male", "Female", "Other"],
+  intakes: [currentYear, currentYear+1, currentYear+2],
+  activityType: ["Extracurriculars"],
 };
 
 export const questions = [

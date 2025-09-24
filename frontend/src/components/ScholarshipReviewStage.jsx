@@ -46,9 +46,9 @@ export default function ReviewStage({ form, onEdit, onSubmit }) {
                                 form.education.map((edu, idx) => (
                                     <div key={idx}>
                                         <h1 className="text-sm font-semibold">{edu.universityName === "Other" ? edu.otherUniversityName : edu.universityName}</h1>
-                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.endDate}</h2>}
+                                        {edu.startDate && <h2 className="text-sm italic mb-1">{edu.startDate} - {edu.isPresent? "Present" : edu.endDate}</h2>}
                                         <p className="text-sm">{edu.level ?? edu.level} &bull; {edu.course ?? edu.course}</p>
-                                        <p className="text-sm">{edu.results && edu.results}</p>
+                                        <p className="text-sm">Results/Grades: {edu.results && edu.results}</p>
                                     </div>
                                 ))
                             ) : (

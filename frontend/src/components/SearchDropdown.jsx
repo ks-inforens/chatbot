@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown, Search } from "lucide-react";
 
 const SearchDropdown = ({
@@ -17,8 +17,28 @@ const SearchDropdown = ({
   onOptionToggle = () => { },
 }) => {
 
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        onToggle(false); 
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onToggle]);
+
   return (
-    <div className={`relative ${className}`}>
+    <div ref={dropdownRef} className={`relative ${className}`}>
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between cursor-pointer text-xs min-h-10 py-2 px-3 border border-orange-800/25 rounded-lg"

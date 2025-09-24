@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { options } from "../data/scholarshipFinderData";
+import SearchDropdown from "./SearchDropdown";
 
 // Helper function to get date string of exactly 18 years ago from today
 const getMinDOB = () => {
@@ -11,6 +12,9 @@ const getMinDOB = () => {
 export default function ScholarshipFinderForm({ form, setForm, onNext }) {
     const [error, setError] = useState("");
     const [validationErrors, setValidationErrors] = useState({});
+    const [countrySearch, setCountrySearch] = useState("");
+    const [universitySearch, setUniversitySearch] = useState("");
+    const [openDropdown, setOpenDropdown] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -51,6 +55,32 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
         setValidationErrors({});
         setError("");
         onNext();
+    };
+
+    const filteredCountries = options["countries"].filter(c =>
+        c.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+
+    const filteredUnis = options["universities"].filter(c =>
+        c.toLowerCase().includes(universitySearch.toLowerCase())
+    );
+
+    const handleSelect = (name, value) => {
+        setForm(prev => ({ ...prev, [name]: value }));
+        setOpenDropdown(null);
+
+        // Clear validation error for this field
+        if (validationErrors[name]) {
+            setValidationErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
+    };
+
+    const toggleDropdown = (name) => {
+        setOpenDropdown(openDropdown === name ? null : name);
     };
 
     const addEducation = () => {
@@ -162,104 +192,90 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                     <label className="text-sm mb-1">
                         Citizenship<span className="text-orange-600">*</span>
                     </label>
-                    <select
-                        name="citizenship"
-                        value={form.citizenship}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Choose country...</option>
-                        {options["countries"].map((c) => (
-                            <option key={c} value={c}>
-                                {c}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.citizenship || "Select"}
+                        isOpen={openDropdown === "citizenship"}
+                        onToggle={() => toggleDropdown("citizenship")}
+                        searchable
+                        multiSelect={false}
+                        searchValue={countrySearch}
+                        onSearchChange={e => setCountrySearch(e.target.value)}
+                        options={filteredCountries.map(c => ({ id: c, name: c }))}
+                        selectedOptions={form.citizenship ? [form.citizenship] : []}
+                        onOptionToggle={id => handleSelect("citizenship", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="text-sm mb-1">
-                        Preferred Country<span className="text-orange-600">*</span>
+                        Target Country<span className="text-orange-600">*</span>
                     </label>
-                    <select
-                        name="preferredCountry"
-                        value={form.preferredCountry}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Choose country...</option>
-                        {options["countries"].map((c) => (
-                            <option key={c} value={c}>
-                                {c}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.preferredCountry || "Select"}
+                        isOpen={openDropdown === "preferredCountry"}
+                        onToggle={() => toggleDropdown("preferredCountry")}
+                        searchable
+                        multiSelect={false}
+                        searchValue={countrySearch}
+                        onSearchChange={e => setCountrySearch(e.target.value)}
+                        options={filteredCountries.map(c => ({ id: c, name: c }))}
+                        selectedOptions={form.preferredCountry ? [form.preferredCountry] : []}
+                        onOptionToggle={id => handleSelect("preferredCountry", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="text-sm mb-1">
                         Level<span className="text-orange-600">*</span>
                     </label>
-                    <select
-                        name="studyLevel"
-                        value={form.studyLevel}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Select study level</option>
-                        {options["studyLevels"].map((level) => (
-                            <option key={level} value={level}>
-                                {level}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.studyLevel || "Select"}
+                        isOpen={openDropdown === "studyLevel"}
+                        onToggle={() => toggleDropdown("studyLevel")}
+                        options={options["studyLevels"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.studyLevel ? [form.studyLevel] : []}
+                        onOptionToggle={id => handleSelect("studyLevel", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="text-sm mb-1">
-                        Preferred Field<span className="text-orange-600">*</span>
+                        Target Field<span className="text-orange-600">*</span>
                     </label>
-                    <select
-                        name="field"
-                        value={form.field}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Select your field</option>
-                        {options["fields"].map((f) => (
-                            <option key={f} value={f}>
-                                {f}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.field || "Select"}
+                        isOpen={openDropdown === "field"}
+                        onToggle={() => toggleDropdown("field")}
+                        options={options["fields"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.field ? [form.field] : []}
+                        onOptionToggle={id => handleSelect("field", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm mb-1">Preferred Universities</label>
-                    <select
-                        name="university"
-                        value={form.university}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Select your preferred university</option>
-                        {options["universities"].map((u) => (
-                            <option key={u} value={u}>
-                                {u}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="text-sm mb-1">Target University</label>
+                    <SearchDropdown
+                        label={form.university || "Select"}
+                        isOpen={openDropdown === "university"}
+                        onToggle={() => toggleDropdown("university")}
+                        searchable
+                        searchValue={universitySearch}
+                        onSearchChange={e => setUniversitySearch(e.target.value)}
+                        options={filteredUnis.map(c => ({ id: c, name: c }))}
+                        selectedOptions={form.university ? [form.university] : []}
+                        onOptionToggle={id => handleSelect("university", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm mb-1">Course Intake</label>
-                    <input
-                        name="intake"
-                        value={form.intake}
-                        onChange={handleChange}
-                        type="text"
-                        placeholder="When do you wish to start..."
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                    <label className="text-sm mb-1">Intake</label>
+                    <SearchDropdown
+                        label={form.intake || "Select"}
+                        isOpen={openDropdown === "intake"}
+                        onToggle={() => toggleDropdown("intake")}
+                        options={options["intakes"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.intake ? [form.intake] : []}
+                        onOptionToggle={id => handleSelect("intake", id)}
                     />
                 </div>
 
@@ -277,36 +293,26 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
 
                 <div className="flex flex-col gap-2">
                     <label className="text-sm mb-1">Gender</label>
-                    <select
-                        name="gender"
-                        value={form.gender}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Select</option>
-                        {options["genders"].map((g) => (
-                            <option key={g} value={g}>
-                                {g}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.gender || "Select"}
+                        isOpen={openDropdown === "gender"}
+                        onToggle={() => toggleDropdown("gender")}
+                        options={options["genders"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.gender ? [form.gender] : []}
+                        onOptionToggle={id => handleSelect("gender", id)}
+                    />
                 </div>
 
                 <div className="flex flex-col gap-2">
                     <label className="text-sm mb-1">Disability Status</label>
-                    <select
-                        name="disability"
-                        value={form.disability}
-                        onChange={handleChange}
-                        className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                    >
-                        <option value="">Have a disability?</option>
-                        {options["disabilityOptions"].map((d) => (
-                            <option key={d} value={d}>
-                                {d}
-                            </option>
-                        ))}
-                    </select>
+                    <SearchDropdown
+                        label={form.disability || "Have a disability?"}
+                        isOpen={openDropdown === "disability"}
+                        onToggle={() => toggleDropdown("disability")}
+                        options={options["disabilityOptions"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.disability ? [form.disability] : []}
+                        onOptionToggle={id => handleSelect("disability", id)}
+                    />
                 </div>
                 {form.disability === "Yes" && (
                     <div className="flex flex-col gap-2">
@@ -364,7 +370,7 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                                             onChange={e => updateEducation(i, "level", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                         >
-                                            <option value="">Select study level</option>
+                                            <option value="">Select your study level...</option>
                                             {options["studyLevels"].map((level) => (
                                                 <option key={level} value={level}>
                                                     {level}
@@ -524,7 +530,16 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
 
                 {/* Extracurricular Activities */}
                 <div className="flex flex-col gap-2 col-span-2">
-                    <label className="text-sm mb-1">Extracurricular Activities</label>
+                    <label className="text-sm mb-1">Hobbies, Volunteer Work or Extracurriculars</label>
+                    <SearchDropdown
+                        label={form.typeOfActivity || "Select one..."}
+                        isOpen={openDropdown === "typeOfActivity"}
+                        onToggle={() => toggleDropdown("typeOfActivity")}
+                        options={options["activityType"].map(s => ({ id: s, name: s }))}
+                        selectedOptions={form.typeOfActivity ? [form.typeOfActivity] : []}
+                        onOptionToggle={id => handleSelect("typeOfActivity", id)}
+                        className="md:max-w-100"
+                    />
                     <textarea
                         name="extracurricular"
                         value={form.extracurricular}
