@@ -709,7 +709,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                             type="text"
                                             name="certificateName"
                                             value={cert.name || ""}
-                                            placeholder="Certificate Name"
+                                            placeholder="Certification Name"
                                             onChange={e => {
                                                 const updated = [...(form.awards || [])];
                                                 updated[idx] = { ...updated[idx], name: e.target.value };
