@@ -703,7 +703,7 @@ export default function SOPBuilderForm({ form, setForm, onNext }) {
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">
-                                            Award Name<span className="text-orange-600">*</span>
+                                            Name<span className="text-orange-600">*</span>
                                         </label>
                                         <input
                                             type="text"
