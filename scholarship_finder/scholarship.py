@@ -99,11 +99,13 @@ Example output:
   "scholarships": [
     {
       "name": "Commonwealth Scholarship",
-      "description": "Covers tuition and living expenses for postgraduate study in the UK for students from eligible Commonwealth countries."
+      "description": "Covers tuition and living expenses for postgraduate study in the UK for students from eligible Commonwealth countries.",
+      "deadline": "Dec 12, 2025 (mmm dd, yyyy format)"
     },
     {
       "name": "...",
-      "description": "..."
+      "description": "...",
+      "deadline": "... (mmm dd, yyyy format)"
     }
   ]
 }
