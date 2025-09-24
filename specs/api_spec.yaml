@@ -3,7 +3,7 @@ info:
   title: Inforens Chatbot APIs
   version: 1.0.0
 servers:
-  - url: http://localhost:5000
+  - url: http://127.0.0.1:5000
 paths:
   /api/ask:
     post:
@@ -239,7 +239,7 @@ paths:
         "200":
           description: DOCX file download
           content:
-            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+            application/octet-stream:
               schema:
                 type: string
                 format: binary
@@ -268,7 +268,7 @@ paths:
         "200":
           description: DOCX file download
           content:
-            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+            application/octet-stream:
               schema:
                 type: string
                 format: binary
@@ -292,7 +292,7 @@ paths:
         "200":
           description: Generated cover letter DOCX file
           content:
-            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+            application/octet-stream:
               schema:
                 type: string
                 format: binary
@@ -316,6 +316,8 @@ paths:
                 file:
                   type: string
                   format: binary
+              required:
+                - file
       responses:
         "200":
           description: Parsed CV info returned as JSON
