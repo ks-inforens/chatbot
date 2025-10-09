@@ -62,8 +62,6 @@ class PerplexityChatbot:
         except Exception as e:
             return f"API request failed: {str(e)}"
 
-
-
 if __name__ == "__main__":
     API_KEY = current_app.config.get('PERPLEXITY_API_KEY')
 
