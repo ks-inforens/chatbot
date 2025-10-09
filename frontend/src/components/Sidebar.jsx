@@ -27,10 +27,10 @@ export default function Sidebar({ selected, stage, accessControl, onStageChange 
           onChange={(e) => onStageChange(Number(e.target.value))}
           className="text-xs rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500/10 border border-orange-800/30"
         >
-          <option className="bg-orange-50" value={1}>Stage 1 - Planning to Apply Abroad</option>
-          <option className="bg-orange-50" value={2}>Stage 2 - Already Applied Abroad</option>
-          <option className="bg-orange-50" value={3}>Stage 3 - Ready to Fly Abroad</option>
-          <option className="bg-orange-50" value={4}>Stage 4 - Already at University Abroad</option>
+          <option className="bg-orange-50" value={1}>Planning to Apply Abroad</option>
+          <option className="bg-orange-50" value={2}>Already Applied Abroad</option>
+          <option className="bg-orange-50" value={3}>Ready to Fly Abroad</option>
+          <option className="bg-orange-50" value={4}>Already at University Abroad</option>
         </select>
       </div>
 
