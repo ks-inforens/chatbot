@@ -1,4 +1,5 @@
 import requests
+from flask import current_app
 import re
 
 class PerplexityChatbot:
@@ -64,7 +65,7 @@ class PerplexityChatbot:
 
 
 if __name__ == "__main__":
-    API_KEY = "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"
+    API_KEY = current_app.config.get('PERPLEXITY_API_KEY')
 
     bot = PerplexityChatbot(api_key=API_KEY, content_file_path="inforens_scraped_data.txt")
 
