@@ -63,9 +63,9 @@ class PerplexityChatbot:
             return f"API request failed: {str(e)}"
 
 if __name__ == "__main__":
-    API_KEY = current_app.config.get('PERPLEXITY_API_KEY')
+    api_key = current_app.config.get('PERPLEXITY_KEY')
 
-    bot = PerplexityChatbot(api_key=API_KEY, content_file_path="inforens_scraped_data.txt")
+    bot = PerplexityChatbot(api_key=api_key, content_file_path="inforens_scraped_data.txt")
 
     print("Inforens Chatbot")
     print("Type 'exit' to quit.\n")
