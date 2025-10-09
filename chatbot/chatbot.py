@@ -13,39 +13,35 @@ class PerplexityChatbot:
             with open(self.content_file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except FileNotFoundError:
-            print("Content file not found.")
+            print("⚠️ Content file not found.")
             return ""
 
-    # Helper: turn URLs into clickable links
-    def linkify_urls(self, text):
-        url_pattern = r"(https?://[^\s]+)"
-        return re.sub(
-            url_pattern,
-            r'<a href="\1" target="_blank" class="cta-link">\1</a>',
-            text
-        )
-
-    # Ask question
+    
     def ask_question(self, user_question):
         if not self.full_text:
             return "No content loaded. Please check the .txt file."
 
+        
         prompt = (
-            "You are an assistant representing Inforens, an organization helping international students. "
-            "Your main job is to redirect students to the most relevant page on our website based on their question. "
-            "Only use the content provided below — do not use external knowledge or speculation. "
-            "If relevant information is found, give a short sentence and add a clear redirect URL. "
-            "DO NOT INCLUDE ANY CITATION NUMBERS LIKE [1][2] etc. "
-            "If nothing is relevant, say 'Please ask me something relevant to Inforens or reach out to contact@inforens.com'\n\n"
-            f"Content:\n{self.full_text}\n\n"
-            f"Question: {user_question}\n"
-            "Answer:"
-        )
+    "You are an assistant for Inforens, helping international students. The audience consists of international students, so every question should be answered from the perspective of an international student."
+    "If the user's question matches Inforens content, answer with that and provide the most relevant Inforens page URL (not the homepage if a better link exists). "
+    "If the question is about something not in the content (such as weather, currency rates, local facts, news, etc.), always answer using your own knowledge, giving a brief general answer and never refuse. "
+    "NEVER say that the question is not related, never say to 'ask a particular question', and never redirect the user back to the homepage unless truly most appropriate. "
+    "Do NOT include any citation styles such as [1], [2], etc. "
+    "ALWAYS attach one relevant Inforens page link in your reply: select the best deep link for the topic, and if no relevant link is found, use https://www.inforens.com/contact-us. "
+    "All answers should be concise (2-3 sentences). "
+    "\n\nInforens Content:\n{self.full_text}\n\n"
+    f"Question: {user_question}\n"
+    "Answer:"
+)
+
+
+
 
         payload = {
             "model": "sonar",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 500
+            "max_tokens": 400  
         }
 
         headers = {
@@ -61,6 +57,25 @@ class PerplexityChatbot:
             )
             response.raise_for_status()
             raw_answer = response.json()['choices'][0]['message']['content']
-            return self.linkify_urls(raw_answer)
+            return raw_answer.strip()
         except Exception as e:
             return f"API request failed: {str(e)}"
+
+
+
+if __name__ == "__main__":
+    API_KEY = "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"
+
+    bot = PerplexityChatbot(api_key=API_KEY, content_file_path="inforens_scraped_data.txt")
+
+    print("Inforens Chatbot")
+    print("Type 'exit' to quit.\n")
+
+    while True:
+        question = input("You: ")
+        if question.lower() in ["exit", "quit"]:
+            print("Chatbot: Goodbye")
+            break
+
+        answer = bot.ask_question(question)
+        print("Chatbot:", answer, "\n")

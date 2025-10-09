@@ -76,7 +76,6 @@ Extract structured information from the following CV text.
 
 ⚠️ Rules:
 - Return ONLY valid JSON in the schema below.
-- If Professional Statement is missing, generate a concise professional summary suitable for the target country: {user_data.get('target_country', '')}.
 - If any new sections exist in the CV (e.g., Languages, Positions of Responsibility), include them in JSON.
 - If information is missing, leave the field empty, do not fabricate.
 - Respect the JSON structure exactly as shown.
@@ -103,7 +102,6 @@ Also, write a professional summary highlighting my goals ONLY IF I have work exp
 
 ⚠️ Rules:
 - Return ONLY valid JSON in the schema below.
-- Generate a Professional Statement based on user data if missing.
 - Respect the JSON structure exactly as shown.
 - If information is missing, leave the field empty, do not fabricate.
 - There are 3 format options that could be provided:\n
