@@ -1,5 +1,4 @@
 import requests
-from flask import current_app
 import re
 
 class PerplexityChatbot:
@@ -61,20 +60,3 @@ class PerplexityChatbot:
             return raw_answer.strip()
         except Exception as e:
             return f"API request failed: {str(e)}"
-
-if __name__ == "__main__":
-    api_key = current_app.config.get('PERPLEXITY_KEY')
-
-    bot = PerplexityChatbot(api_key=api_key, content_file_path="inforens_scraped_data.txt")
-
-    print("Inforens Chatbot")
-    print("Type 'exit' to quit.\n")
-
-    while True:
-        question = input("You: ")
-        if question.lower() in ["exit", "quit"]:
-            print("Chatbot: Goodbye")
-            break
-
-        answer = bot.ask_question(question)
-        print("Chatbot:", answer, "\n")
