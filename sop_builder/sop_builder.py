@@ -120,10 +120,10 @@ def build_sop_prompt(user_inputs):
     if len(user_inputs.get("projects")) > 0:
         base_prompt += "I have also completed these projects/research/publications:\n"
         for p in user_inputs.get("projects"):
-            base_prompt += (f"Type: {p.get("type")}\n"
-                            f"Title: {p.get("title")}\n"
-                            f"Link: {p.get("link")}\n"         
-                            f"Description: {p.get("description")}\n\n"   
+            base_prompt += (f"Type: {p.get('type')}\n"
+                            f"Title: {p.get('title')}\n"
+                            f"Link: {p.get('link')}\n"         
+                            f"Description: {p.get('description')}\n\n"   
                             )
             
     if len(user_inputs.get("education")) > 0:
@@ -133,30 +133,30 @@ def build_sop_prompt(user_inputs):
             else: end = e.get("endDate")
             if e.get("universityName") == "Other": uni = e.get("otherUniversityName")
             else: uni = e.get("universityName")
-            base_prompt += (f"Discipline: {e.get("discipline")}\n"
-                            f"Course Name: {e.get("course")}\n"         
-                            f"Level of Study: {e.get("level")}\n"   
-                            f"Country of Study: {e.get("country")}\n"   
-                            f"Location of Study: {e.get("location")}\n"
-                            f"Results I got: {e.get("results")}\n"
+            base_prompt += (f"Discipline: {e.get('discipline')}\n"
+                            f"Course Name: {e.get('course')}\n"         
+                            f"Level of Study: {e.get('level')}\n"   
+                            f"Country of Study: {e.get('country')}\n"   
+                            f"Location of Study: {e.get('location')}\n"
+                            f"Results I got: {e.get('results')}\n"
                             f"University Name: {uni}\n"
-                            f"Start Date: {e.get("startDate")}\n"
+                            f"Start Date: {e.get('startDate')}\n"
                             f"End Date: {end}\n"
                             )
             
     if len(user_inputs.get("awards")) > 0:
         base_prompt += "I have received these certifications:\n"
         for p in user_inputs.get("awards"):
-            base_prompt += (f"Type of certification: {p.get("type")}\n"
-                            f"Name: {p.get("name")}\n"
-                            f"Issuing Organization: {p.get("organization")}\n"         
-                            f"Date obtained: {p.get("dateObtained")}\n\n"   
+            base_prompt += (f"Type of certification: {p.get('type')}\n"
+                            f"Name: {p.get('name')}\n"
+                            f"Issuing Organization: {p.get('organization')}\n"         
+                            f"Date obtained: {p.get('dateObtained')}\n\n"   
                             )
             
     if len(user_inputs.get("activity")) > 0:
         base_prompt += "Here is more information about the activities I did:\n"
         for p in user_inputs.get("activity"):
-            base_prompt += (f"{p.get("type")}: {p.get("description")}")
+            base_prompt += (f"{p.get('type')}: {p.get('description')}\n\n")
         
     return base_prompt.strip()
 
