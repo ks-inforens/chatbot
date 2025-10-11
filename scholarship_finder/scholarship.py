@@ -121,7 +121,8 @@ def fetch_scholarships(prompt):
     from flask import current_app
     url = "https://api.perplexity.ai/chat/completions"
     headers = {
-        "Authorization": f"Bearer {current_app.config.get("PERPLEXITY_API_KEY")}",
+        #"Authorization": f"Bearer {current_app.config.get("PERPLEXITY_API_KEY")}",
+        "Authorization": f"Bearer {current_app.config.get('PERPLEXITY_API_KEY')}",
         "Content-Type": "application/json"
     }
     payload = {
