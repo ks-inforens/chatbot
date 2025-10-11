@@ -33,8 +33,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application
 COPY . .
 
-# Ensure the content file is there
 COPY inforens_scraped_data.txt /app/inforens_scraped_data.txt
+
+# Ensure the content file is there
+#COPY inforens_scraped_data.txt /app/inforens_scraped_data.txt
 
 EXPOSE 5000
 
