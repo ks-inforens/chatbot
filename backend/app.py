@@ -11,7 +11,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://inforens-chatbot.vercel.app"], supports_credentials=True)
 
 SWAGGER_URL = "/apidocs"       
 API_URL = "/swagger.yaml"   
