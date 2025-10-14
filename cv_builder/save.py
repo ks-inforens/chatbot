@@ -288,7 +288,9 @@ def save_as_docx(text, filename="generated_cv.docx"):
     for add_sec in additional_sections:
         title = add_sec.get("title", "")
         desc = add_sec.get("desc", "")
-        if title and desc:
+        if any(word in title.lower() for word in ["professional", "statement", "summary"]):
+            pass
+        elif title and desc:
             add_section_header(title)
             for paragraph in desc.split("\n"):
                 doc.add_paragraph(paragraph.strip())
