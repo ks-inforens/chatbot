@@ -32,6 +32,14 @@ def create_chatbot():
         content_file_path=current_app.config.get('CONTENT_FILE')
     )
 
+@bp.after_request
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', 'https://inforens-chatbot.vercel.app')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+    return response
+
 @bp.route('/ask', methods=['POST'])
 @swag_from('specs/api_spec.yaml', endpoint='api.ask')
 def ask():
