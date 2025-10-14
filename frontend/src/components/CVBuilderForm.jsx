@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { buildCvSchema } from "../validation/cvSchema";
 import SearchDropdown from "./SearchDropdown";
 import { Upload } from "lucide-react";
 import { ClipLoader } from "react-spinners";
@@ -17,102 +18,19 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
     const fileUrl = file ? URL.createObjectURL(file) : null;
 
-    // Validation rules
-    const validateField = (name, value, isRequired = false) => {
-        const errors = {};
-
-        if (isRequired && (!value || value.toString().trim() === "")) {
-            errors[name] = "This field is required";
-            return errors;
-        }
-
-        if (!value || value.toString().trim() === "") {
-            return errors;
-        }
-
-        switch (name) {
-            case 'email':
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(value)) {
-                    errors[name] = "Please enter a valid email address";
-                }
-                break;
-            case 'phone':
-                const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-                if (!phoneRegex.test(value)) {
-                    errors[name] = "Please enter a valid phone number";
-                }
-                break;
-            case 'startDate':
-            case 'endDate':
-                if (value && isNaN(Date.parse(value))) {
-                    errors[name] = "Please enter a valid date";
-                }
-                break;
-            default:
-                break;
-        }
-
-        return errors;
-    };
-
-    const validateWorkExperience = (workExp, index) => {
-        const errors = {};
-        const requiredFields = ['type', 'jobTitle', 'companyName', 'startDate', 'responsibilities'];
-
-        requiredFields.forEach(field => {
-            if (!workExp[field] || workExp[field].toString().trim() === "") {
-                errors[`workExperience.${index}.${field}`] = "This field is required";
-            }
-        });
-
-        // Validate dates
-        if (workExp.startDate && workExp.endDate && workExp.endDate !== 'Present') {
-            const startDate = new Date(workExp.startDate);
-            const endDate = new Date(workExp.endDate);
-            if (endDate <= startDate) {
-                errors[`workExperience.${index}.endDate`] = "End date must be after start date";
-            }
-        }
-
-        return errors;
-    };
-
-    const validateEducation = (edu, index) => {
-        const errors = {};
-        const requiredFields = ['universityName', 'discipline', 'country', 'region', 'level', 'results', 'startDate'];
-
-        requiredFields.forEach(field => {
-            if (!edu[field] || edu[field].toString().trim() === "") {
-                errors[`education.${index}.${field}`] = "This field is required";
-            }
-        });
-
-        // Validate dates
-        if (edu.startDate && edu.endDate && edu.endDate !== 'Present') {
-            const startDate = new Date(edu.startDate);
-            const endDate = new Date(edu.endDate);
-            if (endDate <= startDate) {
-                errors[`education.${index}.endDate`] = "End date must be after start date";
-            }
-        }
-
-        return errors;
-    };
-
     useEffect(() => {
         if (parsedData) {
             const updatedForm = { ...form };
 
-            // Basic contact information
-            if (parsedData.full_name) updatedForm.firstName = parsedData.full_name.split(" ")[0];
-            if (parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1];
-            if (parsedData.email) updatedForm.email = parsedData.email;
-            if (parsedData.phone) updatedForm.phone = parsedData.phone;
-            if (parsedData.location) updatedForm.location = parsedData.location;
+            // Basic contact information (only fill if empty to preserve edits)
+            if (!updatedForm.firstName && parsedData.full_name) updatedForm.firstName = parsedData.full_name.split(" ")[0];
+            if (!updatedForm.lastName && parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1] || updatedForm.lastName;
+            if (!updatedForm.email && parsedData.email) updatedForm.email = parsedData.email;
+            if (!updatedForm.phone && parsedData.phone) updatedForm.phone = parsedData.phone;
+            if (!updatedForm.location && parsedData.location) updatedForm.location = parsedData.location;
 
             // Work Experience
-            if (parsedData.work_experience && parsedData.work_experience.length > 0) {
+            if ((!updatedForm.workExperience || updatedForm.workExperience.length === 0) && parsedData.work_experience && parsedData.work_experience.length > 0) {
                 updatedForm.workExperience = parsedData.work_experience.map(exp => ({
                     type: exp.type_of_work || '',
                     jobTitle: exp.job_title || '',
@@ -126,7 +44,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Education
-            if (parsedData.education && parsedData.education.length > 0) {
+            if ((!updatedForm.education || updatedForm.education.length === 0) && parsedData.education && parsedData.education.length > 0) {
                 updatedForm.education = parsedData.education.map(edu => {
                     const universityOptions = options["universities"] || [];
                     const isOther = !universityOptions.includes(edu.university_name);
@@ -149,13 +67,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
             // Skills
             if (parsedData.skills) {
-                if (parsedData.skills.technical_skills) {
+                if ((!updatedForm.technicalSkills || updatedForm.technicalSkills.length === 0) && parsedData.skills.technical_skills) {
                     const techSkills = typeof parsedData.skills.technical_skills === 'string'
                         ? parsedData.skills.technical_skills.split(',').map(skill => skill.trim())
                         : parsedData.skills.technical_skills;
                     updatedForm.technicalSkills = techSkills;
                 }
-                if (parsedData.skills.soft_skills) {
+                if ((!updatedForm.softSkills || updatedForm.softSkills.length === 0) && parsedData.skills.soft_skills) {
                     const softSkills = typeof parsedData.skills.soft_skills === 'string'
                         ? parsedData.skills.soft_skills.split(',').map(skill => skill.trim())
                         : parsedData.skills.soft_skills;
@@ -164,12 +82,12 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Languages
-            if (parsedData.languages_known && parsedData.languages_known.length > 0) {
-                updatedForm.languagesKnown = parsedData.languages_known || ""
+            if ((!updatedForm.languagesKnown || updatedForm.languagesKnown.length === 0) && parsedData.languages_known && parsedData.languages_known.length > 0) {
+                updatedForm.languagesKnown = parsedData.languages_known || "";
             }
 
             // Certifications
-            if (parsedData.certifications && parsedData.certifications.length > 0) {
+            if ((!updatedForm.certificates || updatedForm.certificates.length === 0) && parsedData.certifications && parsedData.certifications.length > 0) {
                 updatedForm.certificates = parsedData.certifications.map(cert => ({
                     type: cert.type || '',
                     name: cert.name || cert.title || '',
@@ -179,7 +97,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Projects
-            if (parsedData.projects && parsedData.projects.length > 0) {
+            if ((!updatedForm.projects || updatedForm.projects.length === 0) && parsedData.projects && parsedData.projects.length > 0) {
                 updatedForm.projects = parsedData.projects.map(proj => ({
                     type: proj.type || '',
                     title: proj.title || '',
@@ -189,7 +107,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Links
-            if (parsedData.links && parsedData.links.length > 0) {
+            if ((!updatedForm.links || updatedForm.links.length === 0) && parsedData.links && parsedData.links.length > 0) {
                 updatedForm.links = parsedData.links.map(link => ({
                     name: link.name || '',
                     url: link.url || '',
@@ -197,7 +115,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Additional Sections
-            if (parsedData.additionalSec && parsedData.additionalSec.length > 0) {
+            if ((!updatedForm.additionalSec || updatedForm.additionalSec.length === 0) && parsedData.additionalSec && parsedData.additionalSec.length > 0) {
                 updatedForm.additionalSec = parsedData.additionalSec.map(section => ({
                     title: section.title || '',
                     desc: section.desc || '',
@@ -309,7 +227,6 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         setForm(prev => ({ ...prev, [name]: value }));
         setOpenDropdown(null);
 
-        // Clear validation error for this field
         if (validationErrors[name]) {
             setValidationErrors(prev => {
                 const newErrors = { ...prev };
@@ -472,14 +389,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         setForm(prev => ({ ...prev, [name]: value }));
         setError("");
 
-        const fieldErrors = validateField(name, value, ['firstName', 'lastName', 'email', 'phone'].includes(name));
-        setValidationErrors(prev => ({
-            ...prev,
-            ...fieldErrors
-        }));
-
-        // Clear validation error if field becomes valid
-        if (Object.keys(fieldErrors).length === 0 && validationErrors[name]) {
+        if (validationErrors[name]) {
             setValidationErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[name];
@@ -495,54 +405,62 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
         }));
     };
 
+    const getElementForErrorKey = (errorKey) => {
+        let element = null;
+        if (errorKey.includes('.')) {
+            const parts = errorKey.split('.');
+            const fieldName = parts[parts.length - 1];
+            element = document.querySelector(`[name="${fieldName}"]`);
+            if (!element) {
+                const container = document.querySelector(`[data-error-key="${errorKey}"]`);
+                if (container) {
+                    element = container.querySelector('input, textarea, select, button, [role="button"], [tabindex]');
+                }
+            }
+        } else {
+            element = document.querySelector(`[name="${errorKey}"]`);
+            if (!element) {
+                const container = document.querySelector(`[data-error-key="${errorKey}"]`);
+                if (container) {
+                    element = container.querySelector('input, textarea, select, button, [role="button"], [tabindex]');
+                }
+            }
+        }
+        return element;
+    };
+
+    const scrollToFirstError = (errors) => {
+        const firstErrorKey = Object.keys(errors)[0];
+        if (!firstErrorKey) return;
+        const element = getElementForErrorKey(firstErrorKey);
+        if (element) {
+            const yOffset = -100;
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+            setTimeout(() => element.focus(), 250);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        let requiredFields = ["firstName", "lastName", "email", "phone"];
-        let allErrors = {};
-
-        if (!parsedData) {
-            requiredFields.push("targetCountry");
-        } else if (parsedData && formatOption === "country") {
-            requiredFields.push("targetCountry");
-        } else if (parsedData && formatOption === "company") {
-            requiredFields.push("targetCompany", "jobDescription");
-        } else if (parsedData && formatOption === "role") {
-            requiredFields.push("targetRole");
-        } else if (parsedData && !formatOption) {
+        if (parsedData && !formatOption) {
             setError("Please select a formatting option.");
             return;
         }
 
-        // Validate required fields
-        for (let field of requiredFields) {
-            if (!form[field] || form[field].toString().trim() === "") {
-                allErrors[field] = "This field is required";
-            } else {
-                const fieldErrors = validateField(field, form[field], true);
-                allErrors = { ...allErrors, ...fieldErrors };
+        const schema = buildCvSchema({ parsedData, formatOption });
+        const result = schema.safeParse(form);
+
+        if (!result.success) {
+            const allErrors = {};
+            for (const issue of result.error.issues) {
+                const path = issue.path.join(".");
+                allErrors[path] = issue.message || "Invalid value";
             }
-        }
-
-        // Validate work experience
-        if (form.workExperience && form.workExperience.length > 0) {
-            form.workExperience.forEach((workExp, index) => {
-                const workErrors = validateWorkExperience(workExp, index);
-                allErrors = { ...allErrors, ...workErrors };
-            });
-        }
-
-        // Validate education
-        if (form.education && form.education.length > 0) {
-            form.education.forEach((edu, index) => {
-                const eduErrors = validateEducation(edu, index);
-                allErrors = { ...allErrors, ...eduErrors };
-            });
-        }
-
-        if (Object.keys(allErrors).length > 0) {
             setValidationErrors(allErrors);
-            setError("Please fix the errors above and try again.");
+            setError("");
+            scrollToFirstError(allErrors);
             return;
         }
 
@@ -627,7 +545,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 : "bg-black/5 text-black/80 hover:bg-black/10"
                                 }`}
                         >
-                            Format by Country
+                            Format for Studies
                         </button>
                         <button
                             type="button"
@@ -637,17 +555,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 : "bg-black/5 text-black/80 hover:bg-black/10"
                                 }`}
                         >
-                            Format by Company
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setFormatOption("role")}
-                            className={`px-4 py-3 md:py-0 h-10 rounded-full text-sm font-medium transition-all duration-300 ${formatOption === "role"
-                                ? "bg-[#db5800] text-white"
-                                : "bg-black/5 text-black/80 hover:bg-black/10"
-                                }`}
-                        >
-                            Format by Role
+                            Format for Jobs
                         </button>
                     </div>
                 </div>
@@ -656,7 +564,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     {(!parsedData || (parsedData && formatOption === "country")) && (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-2" data-error-key="targetCountry">
                             <label className="text-sm px-2 mb-1">
                                 Target Country<span className="text-orange-600">*</span>
                             </label>
@@ -672,6 +580,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 selectedOptions={form.targetCountry ? [form.targetCountry] : []}
                                 onOptionToggle={id => handleSelect("targetCountry", id)}
                             />
+                            {/* Visual invalid marker for global CSS ring when invalid */}
+                            <div style={{ display: 'none' }} data-required="true" data-invalid={!!validationErrors["targetCountry"]}></div>
                             {renderFieldError("targetCountry")}
                         </div>
                     )}
@@ -688,6 +598,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 onChange={handleChange}
                                 placeholder="Enter target company name"
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                data-required={true}
+                                data-invalid={!!validationErrors["targetCompany"]}
                             />
                             {renderFieldError("targetCompany")}
                         </div>
@@ -705,6 +617,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     onChange={handleChange}
                                     placeholder="Paste the job description here..."
                                     className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
+                                    data-required={true}
+                                    data-invalid={!!validationErrors["jobDescription"]}
                                     rows={4}
                                 />
                                 {renderFieldError("jobDescription")}
@@ -736,6 +650,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 onChange={handleChange}
                                 placeholder="Enter your desired role"
                                 className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                data-required={true}
+                                data-invalid={!!validationErrors["targetRole"]}
                             />
                             {renderFieldError("targetRole")}
                         </div>
@@ -758,6 +674,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         onChange={handleChange}
                                         placeholder="Your first name"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        data-required={true}
+                                        data-invalid={!!validationErrors["firstName"]}
                                     />
                                     {renderFieldError("firstName")}
                                 </div>
@@ -770,6 +688,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         onChange={handleChange}
                                         placeholder="Your last name"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        data-required={true}
+                                        data-invalid={!!validationErrors["lastName"]}
                                     />
                                     {renderFieldError("lastName")}
                                 </div>
@@ -782,6 +702,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         onChange={handleChange}
                                         placeholder="you@example.com"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        data-required={true}
+                                        data-invalid={!!validationErrors["email"]}
                                     />
                                     {renderFieldError("email")}
                                 </div>
@@ -794,6 +716,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         onChange={handleChange}
                                         placeholder="+1234567890"
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                        data-required={true}
+                                        data-invalid={!!validationErrors["phone"]}
                                     />
                                     {renderFieldError("phone")}
                                 </div>
@@ -868,6 +792,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={w.type}
                                             onChange={e => updateWorkExperience(i, "type", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.type`]}
                                         >
                                             <option value="">Type of Work</option>
                                             {options["workTypes"].map(t => <option key={t} value={t}>{t}</option>)}
@@ -878,10 +804,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         <label className="text-sm mb-1">Job Title<span className="text-orange-600">*</span></label>
                                         <input
                                             type="text"
+                                            name="jobTitle"
                                             value={w.jobTitle}
                                             onChange={e => updateWorkExperience(i, "jobTitle", e.target.value)}
                                             placeholder="Job Title"
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.jobTitle`]}
                                         />
                                         {renderFieldError(`workExperience.${i}.jobTitle`)}
                                     </div>
@@ -889,10 +818,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         <label className="text-sm mb-1">Company<span className="text-orange-600">*</span></label>
                                         <input
                                             type="text"
+                                            name="companyName"
                                             value={w.companyName}
                                             onChange={e => updateWorkExperience(i, "companyName", e.target.value)}
                                             placeholder="Company"
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.companyName`]}
                                         />
                                         {renderFieldError(`workExperience.${i}.companyName`)}
                                     </div>
@@ -900,17 +832,23 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         <label className="text-sm mb-1">Period<span className="text-orange-600">*</span></label>
                                         <input
                                             type="date"
+                                            name="startDate"
                                             value={w.startDate}
                                             onChange={e => updateWorkExperience(i, "startDate", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.startDate`]}
                                         />
                                         {renderFieldError(`workExperience.${i}.startDate`)}
                                         <input
                                             type="date"
+                                            name="endDate"
                                             value={w.endDate}
                                             disabled={w.isPresent}
                                             onChange={e => updateWorkExperience(i, "endDate", e.target.value)}
                                             className={`w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg ${w.isPresent ? "bg-black/5 text-black/30" : "bg-none text-black/80"}`}
+                                            data-required={!w.isPresent}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.endDate`]}
                                         />
                                         {renderFieldError(`workExperience.${i}.endDate`)}
                                         <div className="flex items-center gap-2 px-2">
@@ -929,17 +867,21 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">Responsibilities<span className="text-orange-600">*</span></label>
                                         <textarea
+                                            name="responsibilities"
                                             value={w.responsibilities}
                                             onChange={e => updateWorkExperience(i, "responsibilities", e.target.value)}
                                             className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
                                             placeholder="Responsibilities"
                                             rows={4}
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`workExperience.${i}.responsibilities`]}
                                         />
                                         {renderFieldError(`workExperience.${i}.responsibilities`)}
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <label className="text-sm mb-1">Achievements</label>
                                         <textarea
+                                            name="achievements"
                                             value={w.achievements}
                                             onChange={e => updateWorkExperience(i, "achievements", e.target.value)}
                                             placeholder="Achievements"
@@ -981,6 +923,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={edu.discipline}
                                             onChange={e => updateEducation(i, "discipline", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.discipline`]}
                                         >
                                             <option value="">Select discipline</option>
                                             {options["fields"].map((field) => (
@@ -999,6 +943,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={edu.level}
                                             onChange={e => updateEducation(i, "level", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.level`]}
                                         >
                                             <option value="">Select study level</option>
                                             {options["studyLevels"].map((level) => (
@@ -1015,6 +961,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         </label>
                                         <input
                                             type="text"
+                                            name="course"
                                             value={edu.course}
                                             onChange={e => updateEducation(i, "course", e.target.value)}
                                             placeholder="Course Name"
@@ -1030,6 +977,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={edu.country}
                                             onChange={e => updateEducation(i, "country", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.country`]}
                                         >
                                             <option value="">Select country</option>
                                             {options["countries"].map((c) => (
@@ -1048,6 +997,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={edu.region}
                                             onChange={e => updateEducation(i, "region", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.region`]}
                                         >
                                             <option value="">Select region</option>
                                             {options["regions"].map((r) => (
@@ -1064,6 +1015,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         </label>
                                         <input
                                             type="text"
+                                            name="location"
                                             value={edu.location}
                                             onChange={e => updateEducation(i, "location", e.target.value)}
                                             placeholder="Location Name"
@@ -1080,6 +1032,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             value={edu.universityName === "Other" ? "Other" : edu.universityName}
                                             onChange={e => handleSelectChange(i, e)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.universityName`]}
                                         >
                                             <option value="">Select university</option>
                                             {options["universities"].map((u) => (
@@ -1091,13 +1045,17 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         </select>
 
                                         {edu.universityName === "Other" && (
-                                            <input
-                                                type="text"
-                                                value={edu.otherUniversityName}
-                                                onChange={e => handleOtherInputChange(i, e)}
-                                                placeholder="Other"
-                                                className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
-                                            />
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    name="otherUniversityName"
+                                                    value={edu.otherUniversityName}
+                                                    onChange={e => handleOtherInputChange(i, e)}
+                                                    placeholder="Other"
+                                                    className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                                />
+                                                {renderFieldError(`education.${i}.otherUniversityName`)}
+                                            </>
                                         )}
 
                                         {renderFieldError(`education.${i}.universityName`)}
@@ -1109,9 +1067,12 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         </label>
                                         <input
                                             type="date"
+                                            name="startDate"
                                             value={edu.startDate}
                                             onChange={e => updateEducation(i, "startDate", e.target.value)}
                                             className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.startDate`]}
                                         />
                                         {renderFieldError(`education.${i}.startDate`)}
                                     </div>
@@ -1120,10 +1081,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                             <label className="text-sm mb-1">End Year<span className="text-orange-600">*</span></label>
                                             <input
                                                 type="date"
+                                                name="endDate"
                                                 value={edu.endDate}
                                                 disabled={edu.isPresent}
                                                 onChange={e => updateEducation(i, "endDate", e.target.value)}
                                                 className={`w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg ${edu.isPresent ? "bg-black/5 text-black/30" : "bg-none text-black/80"}`}
+                                                data-required={!edu.isPresent}
+                                                data-invalid={!!validationErrors[`education.${i}.endDate`]}
                                             />
                                             {renderFieldError(`education.${i}.endDate`)}
                                         </div>
@@ -1141,11 +1105,14 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     <div className="flex flex-col gap-2 col-span-2">
                                         <label className="text-sm mb-1">Results/Grade<span className="text-orange-600">*</span></label>
                                         <textarea
+                                            name="results"
                                             value={edu.results}
                                             onChange={e => updateEducation(i, "results", e.target.value)}
                                             placeholder="Results"
                                             className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
                                             rows={4}
+                                            data-required={true}
+                                            data-invalid={!!validationErrors[`education.${i}.results`]}
                                         />
                                         {renderFieldError(`education.${i}.results`)}
                                     </div>
@@ -1269,7 +1236,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">
-                                        Date Obtained<span className="text-orange-600">*</span>
+                                        Date Obtained
                                     </label>
                                     <input
                                         type="date"
@@ -1331,6 +1298,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         selectedOptions={proj.type ? [proj.type] : []}
                                         onOptionToggle={id => handleProjectSelect(idx, "type", id)}
                                     />
+                                    {renderFieldError(`projects.${idx}.type`)}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">
@@ -1338,7 +1306,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     </label>
                                     <input
                                         type="text"
-                                        name="projectTitle"
+                                        name="title"
                                         value={proj.title || ""}
                                         placeholder="Project Title"
                                         onChange={e => {
@@ -1348,12 +1316,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         }}
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                     />
+                                    {renderFieldError(`projects.${idx}.title`)}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">Project Link</label>
                                     <input
                                         type="url"
-                                        name="projectLink"
+                                        name="link"
                                         value={proj.link || ""}
                                         placeholder="Project Link (Optional)"
                                         onChange={e => {
@@ -1381,6 +1350,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     }}
                                     className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
                                 />
+                                {renderFieldError(`projects.${idx}.description`)}
                             </div>
                         </div>
                     ))}
@@ -1419,18 +1389,20 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                     </label>
                                     <input
                                         type="text"
+                                        name="title"
                                         value={section.title || ""}
                                         placeholder="Section Title"
                                         onChange={e => updateAdditionalSection(idx, "title", e.target.value)}
                                         className="w-full text-xs h-10 px-3 border border-orange-800/25 rounded-lg"
                                     />
+                                    {renderFieldError(`additionalSec.${idx}.title`)}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-sm mb-1">
                                         Section Description<span className="text-orange-600">*</span>
                                     </label>
                                     <textarea
-                                        name="sectionDescription"
+                                        name="desc"
                                         value={section.desc || ""}
                                         rows={3}
                                         placeholder="Section Description"
@@ -1441,6 +1413,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                                         }}
                                         className="w-full text-xs py-2 px-3 border border-orange-800/25 rounded-lg"
                                     />
+                                    {renderFieldError(`additionalSec.${idx}.desc`)}
                                 </div>
                             </div>
                         </div>

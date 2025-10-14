@@ -11,7 +11,7 @@ import SOPBuilderPage from "./pages/SOPBuilderPage";
 export default function App() {
   const location = useLocation();
   const [selectedFeature, setSelectedFeature] = useState();
-  const [userStage, setUserStage] = useState(3); // NEED TO COLLECT USER STAGE 
+  const [userStage, setUserStage] = useState(1); // NEED TO COLLECT USER STAGE 
 
   // Stagewise Access Controls
   const accessControl = {

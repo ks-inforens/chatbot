@@ -39,7 +39,7 @@ export default function Sidebar({ selected, stage, accessControl, onStageChange 
         return (
           <div
             key={name}
-            className={`flex flex-col items-center gap-0 md:gap-1 text-xs justify-center py-1 text-center transition-colors duration-500 w-full ${
+            className={`flex flex-col items-center gap-0 md:gap-1 text-xs justify-center py-1 text-center transition-colors w-full ${
               selected === name && isAllowed
                 ? "text-orange-800"
                 : isAllowed
@@ -55,7 +55,7 @@ export default function Sidebar({ selected, stage, accessControl, onStageChange 
                 } px-3 py-2 rounded-xl transition-all`}
               >
                 <Icon
-                  className={`w-4 h-4 md:w-6 md:h-6 ${
+                  className={`w-4 h-4 md:w-5 md:h-5 ${
                     selected === name ? "text-orange-800" : "text-black/80"
                   }`}
                 />

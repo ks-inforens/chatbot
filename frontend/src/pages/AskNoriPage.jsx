@@ -8,7 +8,8 @@ import {
     FaRegThumbsUp,
     FaSquareFull,
 } from "react-icons/fa";
-import { Send, Copy, Check } from "lucide-react"; 
+import { Send, Copy, Check } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 function uid() {
     return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
@@ -218,9 +219,24 @@ export default function AskNoriPage() {
                     {messages.map((m) => (
                         <div
                             key={m.id}
-                            className={`leading-5 md:leading-6 text-sm fadeIn md:max-w-[80%] ${m.role === "user" ? "user-msg mt-8 mb-2 first:mt-0" : "assistant-msg text-black/70"}`}
+                            className={`leading-5 md:leading-6 text-sm fadeIn md:max-w-[90%] ${m.role === "user" ? "user-msg mt-8 mb-2 first:mt-0" : "assistant-msg text-black/70"}`}
                         >
-                            <div dangerouslySetInnerHTML={{ __html: m.content.replace(/\n/g, "<br/>") }} />
+                            <div className="flex flex-col gap-2 text-justify">
+                                <ReactMarkdown
+                                    components={{
+                                        a: ({ node, ...props }) => (
+                                            <a
+                                                {...props}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-orange-700 underline"
+                                            />
+                                        )
+                                    }}
+                                >
+                                    {m.content}
+                                </ReactMarkdown>
+                            </div>
                             {m.role === "assistant" && (
                                 <div className="flex mt-4">
                                     <div className="p-2 hover:bg-gray-100 rounded-full cursor-pointer" onClick={() => handleThumbsUp(m.id)}>
@@ -272,6 +288,7 @@ export default function AskNoriPage() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Type your question..."
+                            disabled={loading}
                         />
                         <div className="flex items-center hover:bg-gray-100 justify-center p-2 rounded-full cursor-pointer">
                             <button className="text-sm" type="submit">
