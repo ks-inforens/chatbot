@@ -11,6 +11,7 @@ import {
 import { Copy, Check } from "lucide-react";
 import FeaturesDropdown from "./FeaturesDropdown";
 import { API_BASE_URL } from "../data/api";
+import ReactMarkdown from "react-markdown";
 
 function uid() {
   return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
@@ -239,16 +240,28 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
         {messages.map((m) => (
           <motion.div
             key={m.id}
-            className={`text-sm px-3 py-2 rounded-2xl fadeIn ${
-              m.role === "user" ? "user-msg-bot" : "assistant-msg-bot"
-            }`}
+            className={`text-sm px-3 py-2 rounded-2xl fadeIn ${m.role === "user" ? "user-msg-bot" : "assistant-msg-bot"
+              }`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div
-              dangerouslySetInnerHTML={{ __html: m.content.replace(/\n/g, "<br/>") }}
-            />
+            <div className="flex flex-col gap-2">
+              <ReactMarkdown
+                components={{
+                  a: ({ node, ...props }) => (
+                    <a
+                      {...props}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-orange-700 underline"
+                    />
+                  )
+                }}
+              >
+                {m.content}
+              </ReactMarkdown>
+            </div>
             {m.role === "assistant" && (
               <div className="flex mt-2 gap-1">
                 <div
