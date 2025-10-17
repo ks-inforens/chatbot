@@ -42,7 +42,8 @@ class PerplexityChatbot:
             5. Keep all answers clear, practical, friendly, and concise (2 to 4 sentences preferred), never cutting off mid-sentence or mid-word.\\n\
             6. All links should be structured starting with https:// \\n\
             7. Each response MUST contain at least ONE CTA/link to the most relevant Inforens page based on the context of the question.\\n\
-            8. Never mention or compare competitors. Do not use citation numbers, footnotes, markdown links, or brackets—only add URLs as plain text in sentences.\\n\\n\
+            8. When aked to present information in a table, USE A LISTING APPROACH instead, DO NOT display information as a Markdown table.\\n\
+            9. Never mention or compare competitors. Do not use citation numbers, footnotes, markdown links, or brackets—only add URLs as plain text in sentences.\\n\\n\
             Inforens Content:\\n{self.full_text}\\n\\n\
             Question: {user_question}\\n\
             Answer:"
