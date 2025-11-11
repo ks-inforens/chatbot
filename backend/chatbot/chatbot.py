@@ -73,16 +73,3 @@ class PerplexityChatbot:
             return processed_answer.strip()
         except Exception as e:
             return f"API request failed: {str(e)}"
-
-if __name__ == "__main__":
-    API_KEY = "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"
-    bot = PerplexityChatbot(api_key=API_KEY, content_file_path="inforens_scraped_data.txt")
-    print("Inforens Chatbot")
-    print("Type 'exit' to quit.\n")
-    while True:
-        question = input("You: ")
-        if question.lower() in ["exit", "quit"]:
-            print("Chatbot: Goodbye")
-            break
-        answer = bot.ask_question(question)
-        print("Chatbot:", answer, "\n")
