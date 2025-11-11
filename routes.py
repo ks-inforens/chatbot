@@ -32,6 +32,37 @@ def create_chatbot():
         content_file_path=current_app.config.get('CONTENT_FILE')
     )
 
+ALLOWED_ORIGINS = [
+    "https://inforens-chatbot.vercel.app",
+    "https://www.inforens.com",
+    "https://www.inforens.com/",
+    "https://uat.inforens.com",
+    "https://uat.inforens.com/",
+    "https://dev.inforens.com",
+    "https://dev.inforens.com/",
+    "https://devadmin.inforens.com",
+    "https://devadmin.inforens.com/",
+    "https://uatadmin.inforens.com",
+    "https://uatadmin.inforens.com/",
+    "https://admin.inforens.com",
+    "https://admin.inforens.com/",
+    "http://localhost:3000",
+    "http://localhost:3000/"
+]
+@bp.after_request
+def add_cors_headers(response):
+    origin = request.headers.get("Origin")
+    if origin in ALLOWED_ORIGINS:
+        response.headers.add("Access-Control-Allow-Origin", origin)
+    else:
+        # optionally: block or allow none
+        response.headers.add("Access-Control-Allow-Origin", "null")
+
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+    return response
+
 @bp.route('/ask', methods=['POST'])
 @swag_from('specs/api_spec.yaml', endpoint='api.ask')
 def ask():
