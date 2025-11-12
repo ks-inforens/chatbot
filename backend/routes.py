@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, send_file
 from werkzeug.utils import secure_filename
-from models import db, Query  
+from models import db, Query  , CVUpload
 from chatbot.chatbot import PerplexityChatbot
 from scholarship_finder.scholarship import build_prompt as scholarship_prompt, fetch_scholarships
 from sop_builder.sop_builder import generate_sop, save_pdf, save_docx
@@ -400,6 +400,8 @@ def upload_cv():
         return jsonify({"error": "No file part"}), 400
 
     file = request.files['file']
+    session_id = request.form.get("session_id")
+    user_id = request.form.get("user_id")
 
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
@@ -433,6 +435,9 @@ def upload_cv():
 
     try:
         data = json.loads(info_clean)
+        cv_upload = CVUpload(session_id=session_id, user_id=user_id, json_response=data)
+        db.session.add(cv_upload)
+        db.session.commit()
     except Exception as e:
         current_app.logger.error(f"Error parsing cleaned JSON info: {e}")
         return jsonify({"error": "File info could not be parsed as JSON."}), 422

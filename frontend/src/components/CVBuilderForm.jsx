@@ -16,6 +16,14 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     const uploadRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    const sessionId = useMemo(() => {
+        return (
+            localStorage.getItem("sessionId") ||
+            (localStorage.setItem("sessionId", uid()), localStorage.getItem("sessionId"))
+        );
+    }, []);
+    const userId = localStorage.getItem("userId") || null;
+
     const fileUrl = file ? URL.createObjectURL(file) : null;
 
     useEffect(() => {
@@ -164,6 +172,8 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             try {
                 const formData = new FormData();
                 formData.append("file", selectedFile);
+                formData.append("session_id", sessionId);
+                formData.append("user_id", userId);
 
                 const response = await axios.post(`${API_BASE_URL}/upload-cv`, formData, {
                     headers: { "Content-Type": "multipart/form-data" },
