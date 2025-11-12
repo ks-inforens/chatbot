@@ -11,7 +11,6 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app, origins=["https://inforens-chatbot.vercel.app"], supports_credentials=True)
 
 SWAGGER_URL = "/apidocs"       
 API_URL = "/swagger.yaml"   
@@ -22,7 +21,6 @@ swaggerui_bp = get_swaggerui_blueprint(
     config={"app_name": "Inforens Chatbot APIs"}
 )
 app.register_blueprint(swaggerui_bp, url_prefix=SWAGGER_URL)
-
 
 @app.route("/swagger.yaml")
 def swagger_spec():
@@ -40,6 +38,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 init_db(app)
 app.register_blueprint(bp)
+CORS(app, origins=["https://inforens-chatbot.vercel.app"], supports_credentials=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
