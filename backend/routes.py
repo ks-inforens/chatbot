@@ -14,6 +14,7 @@ import time
 import json
 import tempfile
 import os
+import re
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -397,9 +398,9 @@ def _extract_user_data(data, workflow):
 def upload_cv():
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
-    
+
     file = request.files['file']
-    
+
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
@@ -409,7 +410,6 @@ def upload_cv():
     filename = secure_filename(file.filename)
     upload_folder = current_app.config.get('UPLOAD_FOLDER', '/tmp/uploads')
     os.makedirs(upload_folder, exist_ok=True)
-
     file_path = os.path.join(upload_folder, filename)
     file.save(file_path)
 
@@ -418,5 +418,21 @@ def upload_cv():
     else:
         info = extract_info_from_docx(file_path)
 
-    return jsonify(json.loads(info)), 200
 
+    info_clean = info.strip()
+    info_clean = re.sub(r'^`{3}', '', info_clean)
+    info_clean = re.sub(r'`{3}$', '', info_clean)
+    info_clean = info_clean.strip()
+
+
+    if not (info_clean.startswith('{') and info_clean.endswith('}')):
+        current_app.logger.error("Parsed file info does not start and end with curly braces: %r", info_clean)
+        return jsonify({"error": "Invalid JSON output from file parsing."}), 422
+
+    try:
+        data = json.loads(info_clean)
+    except Exception as e:
+        current_app.logger.error(f"Error parsing cleaned JSON info: {e}")
+        return jsonify({"error": "File info could not be parsed as JSON."}), 422
+
+    return jsonify(data), 200
