@@ -92,8 +92,7 @@ export default function ScholarshipFinderPage() {
     dob: "",
     gender: "",
     genderDetails: "",
-    typeOfActivity: "Extracurriculars",
-    extracurricular: "",
+    activity: [{type: "Extracurriculars", description : "" }],
     education: [],
   });
 
@@ -119,8 +118,7 @@ export default function ScholarshipFinderPage() {
           : form.disability === "No"
             ? "No"
             : null,
-      activity_type: form.typeOfActivity || "Extracurriculars",
-      extracurricular: form.extracurricular || null,
+      activity: form.activity,
     };
   };
 

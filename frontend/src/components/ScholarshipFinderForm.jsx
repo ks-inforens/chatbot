@@ -79,6 +79,13 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
         }
     };
 
+    const handleActivitySelect = (idx, key, value) => {
+        const updated = [...(form.activity || [])];
+        updated[idx][key] = value;
+        setForm((prev) => ({ ...prev, activity: updated }));
+        setOpenDropdown(null);
+    };
+
     const toggleDropdown = (name) => {
         setOpenDropdown(openDropdown === name ? null : name);
     };
@@ -531,23 +538,31 @@ export default function ScholarshipFinderForm({ form, setForm, onNext }) {
                 {/* Extracurricular Activities */}
                 <div className="flex flex-col gap-2 col-span-2">
                     <label className="text-sm mb-1">Hobbies, Volunteer Work or Extracurriculars</label>
-                    <SearchDropdown
-                        label={form.typeOfActivity || "Select one..."}
-                        isOpen={openDropdown === "typeOfActivity"}
-                        onToggle={() => toggleDropdown("typeOfActivity")}
-                        options={options["activityType"].map(s => ({ id: s, name: s }))}
-                        selectedOptions={form.typeOfActivity ? [form.typeOfActivity] : []}
-                        onOptionToggle={id => handleSelect("typeOfActivity", id)}
-                        className="md:max-w-100"
-                    />
-                    <textarea
-                        name="extracurricular"
-                        value={form.extracurricular}
-                        onChange={handleChange}
-                        placeholder="Describe your extracurricular activities, achievements, and interests in detail..."
-                        rows={5}
-                        className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
-                    />
+                    {(form.activity || []).map((a, idx) => (
+                        <div key={idx} className="flex flex-col gap-2">
+                            <SearchDropdown
+                                label={a.type || "Select one..."}
+                                isOpen={openDropdown === `typeOfActivity${0}`}
+                                onToggle={() => toggleDropdown(`typeOfActivity${0}`)}
+                                options={options["activityType"].map(s => ({ id: s, name: s }))}
+                                selectedOptions={a.type ? [a.type] : []}
+                                onOptionToggle={id => handleActivitySelect(0, "type", id)}
+                                className="md:max-w-100"
+                            />
+                            <textarea
+                                name="description"
+                                value={a.description}
+                                onChange={e => {
+                                    const updated = [...(form.activity || [])];
+                                    updated[0] = { ...updated[0], description: e.target.value };
+                                    setForm(prev => ({ ...prev, activity: updated }));
+                                }}
+                                placeholder="Describe your extracurricular activities, achievements, and interests in detail..."
+                                rows={5}
+                                className="w-full text-xs p-3 border border-orange-800/25 rounded-lg"
+                            />
+                        </div>
+                    ))}
                 </div>
 
                 {/* Show validation error message */}
