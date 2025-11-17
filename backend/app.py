@@ -38,7 +38,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 init_db(app)
 app.register_blueprint(bp)
-CORS(app, origins=["https://inforens-chatbot.vercel.app"], supports_credentials=True)
+CORS(app, origins="*", supports_credentials=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
