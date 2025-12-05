@@ -64,7 +64,7 @@ def ask():
             session_id=session_id,
             user_id=user_id,
             question=question,
-            answer=raw_answer,
+            answer=raw_answer["answer"],
             model="perplexity-sonar",
             latency_ms=latency_ms,
             success=True,
@@ -76,7 +76,8 @@ def ask():
         db.session.commit()
 
         return jsonify({
-            "answer": raw_answer,
+            "answer": raw_answer["answer"],
+            "links": raw_answer["links"],
             "latencyMs": latency_ms,
             "messageId": query.id
         })
