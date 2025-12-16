@@ -269,8 +269,11 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
     const addNewLink = () => {
         setForm(prev => ({
-            ...prev,
-            links: [...(prev.links || []), ""]
+          ...prev,
+          links: [
+            ...(prev.links || []),
+            { name: "", url: "" },
+          ],
         }));
     };
 
@@ -383,9 +386,9 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
     };
 
     const updateAdditionalSection = (index, key, value) => {
-        const updated = [...(form.additionalSections || [])];
+        const updated = [...(form.additionalSec || [])];
         updated[index][key] = value;
-        setForm(prev => ({ ...prev, additionalSections: updated }));
+        setForm(prev => ({ ...prev, additionalSec: updated }));
     };
 
     const removeAdditionalSection = (index) => {
