@@ -12,7 +12,11 @@ def ensure_full_url(url):
 
 def add_hyperlink(paragraph, url, text, color=RGBColor(0, 0, 255), underline=True):
     part = paragraph.part
-    r_id = part.relate_to(ensure_full_url(url), "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink", is_external=True)
+    r_id = part.relate_to(
+        ensure_full_url(url),
+        "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        is_external=True,
+    )
 
     hyperlink = OxmlElement("w:hyperlink")
     hyperlink.set(qn("r:id"), r_id)
@@ -37,7 +41,6 @@ def add_hyperlink(paragraph, url, text, color=RGBColor(0, 0, 255), underline=Tru
     new_run.append(text_elem)
 
     hyperlink.append(new_run)
-
     paragraph._p.append(hyperlink)
 
     return None
@@ -49,18 +52,23 @@ def add_bottom_border(paragraph):
     pBdr = OxmlElement("w:pBdr")
     bottom = OxmlElement("w:bottom")
     bottom.set(qn("w:val"), "single")
-    bottom.set(qn("w:sz"), "12")  # thicker line
+    bottom.set(qn("w:sz"), "12")  
     bottom.set(qn("w:space"), "0")
     bottom.set(qn("w:color"), "000000")
     pBdr.append(bottom)
     pPr.append(pBdr)
 
 def normalize_text(text):
-    if text.strip().startswith("```"):
-        text = text.strip().split("```")[1]
-        if text.lower().startswith("json"):
-            text = text[4:].strip()
-    return text.strip()
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        parts = stripped.split("```")
+        if len(parts) > 1:
+            stripped = parts[1].strip()
+        else:
+            stripped = stripped.lstrip("`").strip()
+        if stripped.lower().startswith("json"):
+            stripped = stripped[4:].strip()
+    return stripped
 
 def save_as_docx(text, filename="generated_cv.docx"):
     doc = Document()
@@ -73,7 +81,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
 
     style = doc.styles['Normal']
     font = style.font
-    font.name = 'Times New Roman'
+    font.name = 'Seaford Display'
     font.size = Pt(10)
     style.paragraph_format.space_after = Pt(4)
 
@@ -91,12 +99,12 @@ def save_as_docx(text, filename="generated_cv.docx"):
         print(f"DOCX saved as {filename}")
         return filename
 
-    # Helper function for section headers
     def add_section_header(title):
         para = doc.add_paragraph()
         run = para.add_run(title)
         run.bold = True
         run.font.size = Pt(14)
+        run.font.name = 'Times New Roman'
         add_bottom_border(para)
         para.paragraph_format.space_before = Pt(10)
         para.paragraph_format.space_after = Pt(8)
@@ -157,7 +165,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
     def write_work_experience():
         if work_exp:
             add_section_header("Work Experience")
-            for job in work_exp:
+            for idx, job in enumerate(work_exp):
                 job_title = job.get("job_title", "")
                 company_name = job.get("company_name", "")
                 start_date = job.get("start_date", "")
@@ -177,23 +185,31 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     run_comp.bold = True
                     run_comp.italic = True
                 if dates:
-                    tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
-                    para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                    tab_stop = (
+                        doc.sections[0].page_width
+                        - doc.sections[0].left_margin
+                        - doc.sections[0].right_margin
+                    )
+                    para.paragraph_format.tab_stops.add_tab_stop(
+                        tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT
+                    )
                     run_date = para.add_run(f"\t{dates}")
                     run_date.italic = True
-                
+
                 for resp in job.get("responsibilities", []):
-                    bullet = doc.add_paragraph(resp, style='List Bullet')
+                    bullet = doc.add_paragraph(resp, style="List Bullet")
                     bullet.paragraph_format.space_after = Pt(2)
 
                 for ach in job.get("achievements", []):
-                    bullet = doc.add_paragraph("Achievement: " + ach, style='List Bullet')
+                    bullet = doc.add_paragraph(
+                        "Achievement: " + ach, style="List Bullet"
+                    )
                     bullet.paragraph_format.space_after = Pt(2)
 
     def write_education():
         if education:
             add_section_header("Education")
-            for edu in education:
+            for idx, edu in enumerate(education):
                 uni = edu.get("university_name", "")
                 course = edu.get("course", "")
                 discipline = edu.get("discipline", "")
@@ -211,8 +227,14 @@ def save_as_docx(text, filename="generated_cv.docx"):
                 run.bold = True
                 run.italic = True
                 if dates:
-                    tab_stop = doc.sections[0].page_width - doc.sections[0].left_margin - doc.sections[0].right_margin
-                    para.paragraph_format.tab_stops.add_tab_stop(tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT)
+                    tab_stop = (
+                        doc.sections[0].page_width
+                        - doc.sections[0].left_margin
+                        - doc.sections[0].right_margin
+                    )
+                    para.paragraph_format.tab_stops.add_tab_stop(
+                        tab_stop, alignment=WD_TAB_ALIGNMENT.RIGHT
+                    )
                     run_date = para.add_run(f"\t{dates}")
                     run_date.italic = True
 
@@ -223,11 +245,9 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     doc.add_paragraph(f"Result: {result}")
 
     if len(work_exp) > 1:
-        # Work Experience is 2nd, Education is 3rd
         write_work_experience()
         write_education()
     else:
-        # Education is 2nd, Work Experience is 3rd
         write_education()
         write_work_experience()
 
@@ -238,6 +258,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
         for proj in projects:
             title = proj.get("title", "")
             desc = proj.get("description", "")
+            link = proj.get("link", "")
             type_ = proj.get("type", "")
 
             para = doc.add_paragraph()
@@ -247,9 +268,13 @@ def save_as_docx(text, filename="generated_cv.docx"):
             if type_:
                 run_type = para.add_run(f" [{type_}]")
                 run_type.italic = True
-            
+
+            if link:
+                para.add_run(" - ")
+                add_hyperlink(para, link, link)
+
             if desc:
-                doc.add_paragraph(desc, style='List Bullet')
+                doc.add_paragraph(desc, style="List Bullet")
 
     # === 5. Skills ===
     skills = data.get("skills", [])
@@ -275,7 +300,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
             if type_:
                 line += f" [{type_}]"
 
-            doc.add_paragraph(line, style='List Bullet')
+            doc.add_paragraph(line, style="List Bullet")
 
     # === 7. Languages ===
     languages = data.get("languages_known", [])
