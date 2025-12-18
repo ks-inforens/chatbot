@@ -1,7 +1,7 @@
 export const cvOptions = {
     countries: ["India", "United States", "United Kingdom", "Australia", "Canada"],
     regions: ["Any", "Other"],
-    studyLevels: ["Undergraduate", "Post Graduate", "PhD"],
+    studyLevels: ["UG", "PG", "PhD"],
     universities: ["Harvard", "Oxford", "MIT", "Stanford"],
     workTypes: ["Internship", "Full-Time"],
     languages: ["English", "Spanish", "French", "Mandarin", "Hindi", "Arabic", "German", "Italian"],

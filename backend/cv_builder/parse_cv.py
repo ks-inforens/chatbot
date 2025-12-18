@@ -54,7 +54,7 @@ def extract_info_from_text(text):
                 -> achievements: list of achievements or accomplishments within the job (separated by commahs)\n
                 education: this should be an array of dictionaries containing these following fields\n
                 -> discipline: name of the discipline pursued (e.g., Arts, Business, IT, etc)\n
-                -> level: name of the degree level of education (fixed options - either Undergraduate, Postgraduate or PhD)\n
+                -> level: name of the degree level of education (fixed options - either UG, PG or PhD)\n
                 -> course: name of the course pursued for education (e.g., Computer Science, Business Management, etc)\n
                 -> country: name of the country of education (e.g., Australia, United Kingdom, United States, etc)\n
                 -> region: name of region of education (e.g., Greater London for UK, Maharashtra for India, etc)\n

@@ -31,14 +31,14 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             const updatedForm = { ...form };
 
             // Basic contact information (only fill if empty to preserve edits)
-            if (!updatedForm.firstName && parsedData.full_name) updatedForm.firstName = parsedData.full_name.split(" ")[0];
-            if (!updatedForm.lastName && parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1] || updatedForm.lastName;
-            if (!updatedForm.email && parsedData.email) updatedForm.email = parsedData.email;
-            if (!updatedForm.phone && parsedData.phone) updatedForm.phone = parsedData.phone;
-            if (!updatedForm.location && parsedData.location) updatedForm.location = parsedData.location;
+            if (parsedData.full_name) updatedForm.firstName = parsedData.full_name.split(" ")[0];
+            if (parsedData.full_name) updatedForm.lastName = parsedData.full_name.split(" ")[1] || updatedForm.lastName;
+            if (parsedData.email) updatedForm.email = parsedData.email;
+            if (parsedData.phone) updatedForm.phone = parsedData.phone;
+            if (parsedData.location) updatedForm.location = parsedData.location;
 
             // Work Experience
-            if ((!updatedForm.workExperience || updatedForm.workExperience.length === 0) && parsedData.work_experience && parsedData.work_experience.length > 0) {
+            if (parsedData.work_experience && parsedData.work_experience.length > 0) {
                 updatedForm.workExperience = parsedData.work_experience.map(exp => ({
                     type: exp.type_of_work || '',
                     jobTitle: exp.job_title || '',
@@ -52,7 +52,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Education
-            if ((!updatedForm.education || updatedForm.education.length === 0) && parsedData.education && parsedData.education.length > 0) {
+            if (parsedData.education && parsedData.education.length > 0) {
                 updatedForm.education = parsedData.education.map(edu => {
                     const universityOptions = options["universities"] || [];
                     const isOther = !universityOptions.includes(edu.university_name);
@@ -75,13 +75,13 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
 
             // Skills
             if (parsedData.skills) {
-                if ((!updatedForm.technicalSkills || updatedForm.technicalSkills.length === 0) && parsedData.skills.technical_skills) {
+                if (parsedData.skills.technical_skills) {
                     const techSkills = typeof parsedData.skills.technical_skills === 'string'
                         ? parsedData.skills.technical_skills.split(',').map(skill => skill.trim())
                         : parsedData.skills.technical_skills;
                     updatedForm.technicalSkills = techSkills;
                 }
-                if ((!updatedForm.softSkills || updatedForm.softSkills.length === 0) && parsedData.skills.soft_skills) {
+                if (parsedData.skills.soft_skills) {
                     const softSkills = typeof parsedData.skills.soft_skills === 'string'
                         ? parsedData.skills.soft_skills.split(',').map(skill => skill.trim())
                         : parsedData.skills.soft_skills;
@@ -90,12 +90,12 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Languages
-            if ((!updatedForm.languagesKnown || updatedForm.languagesKnown.length === 0) && parsedData.languages_known && parsedData.languages_known.length > 0) {
+            if (parsedData.languages_known && parsedData.languages_known.length > 0) {
                 updatedForm.languagesKnown = parsedData.languages_known || "";
             }
 
             // Certifications
-            if ((!updatedForm.certificates || updatedForm.certificates.length === 0) && parsedData.certifications && parsedData.certifications.length > 0) {
+            if (parsedData.certifications && parsedData.certifications.length > 0) {
                 updatedForm.certificates = parsedData.certifications.map(cert => ({
                     type: cert.type || '',
                     name: cert.name || cert.title || '',
@@ -105,7 +105,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Projects
-            if ((!updatedForm.projects || updatedForm.projects.length === 0) && parsedData.projects && parsedData.projects.length > 0) {
+            if (parsedData.projects && parsedData.projects.length > 0) {
                 updatedForm.projects = parsedData.projects.map(proj => ({
                     type: proj.type || '',
                     title: proj.title || '',
@@ -115,7 +115,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Links
-            if ((!updatedForm.links || updatedForm.links.length === 0) && parsedData.links && parsedData.links.length > 0) {
+            if (parsedData.links && parsedData.links.length > 0) {
                 updatedForm.links = parsedData.links.map(link => ({
                     name: link.name || '',
                     url: link.url || '',
@@ -123,7 +123,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
             }
 
             // Additional Sections
-            if ((!updatedForm.additionalSec || updatedForm.additionalSec.length === 0) && parsedData.additionalSec && parsedData.additionalSec.length > 0) {
+            if (parsedData.additionalSec && parsedData.additionalSec.length > 0) {
                 updatedForm.additionalSec = parsedData.additionalSec.map(section => ({
                     title: section.title || '',
                     desc: section.desc || '',
