@@ -99,7 +99,7 @@ export default function CVBuilderForm({ form, setForm, onNext, setIsExistingCV, 
                 updatedForm.certificates = parsedData.certifications.map(cert => ({
                     type: cert.type || '',
                     name: cert.name || cert.title || '',
-                    organization: cert.organization || cert.issuer || '',
+                    organization: cert.organisation || cert.issuer || '',
                     dateObtained: cert.date_obtained || cert.date ? formatDateForInput(cert.date_obtained || cert.date) : '',
                 }));
             }
