@@ -45,6 +45,36 @@ def determine_intended_degree(academic_text):
     else:
         return "Masters"
 
+def clean_sop_text(text):
+    """ Remove 'Statement of Purpose' heading if present
+    """
+    text = text.strip()
+    lines = text.splitlines()
+    
+    cleaned = []
+    for line in lines[:2]:
+        if 'statement of purpose' in line.strip().lower():
+            cleaned.append(line)
+    
+    cleaned_lines = cleaned + lines[2:]
+    
+    return "\n".join(cleaned_lines).strip()
+
+def parse_bold_segments(text):
+    """
+    Splits text into (segment, is_bold)"""
+
+    parts = re.split(r'(\*\*.*?\*\*)', text)
+    segments = []
+
+    for part in parts:
+        if part.startswith("**") and part.endswith("**"):
+            segments.append((part[2:-2], True))
+        else:
+            segments.append((part, False))
+
+    return segments
+
 def extract_text_from_docx(filepath):
     try:
         doc = Document(filepath)
@@ -181,6 +211,7 @@ def generate_sop(user_inputs, token):
     prompt = build_sop_prompt(user_inputs)
     response = call_perplexity_api(prompt, token)
     sop = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    sop = clean_sop_text(sop)
     return sop, prompt
 
 # === PDF/DOCX helpers (not usually in API, but retained for CLI or download endpoint) ===
@@ -194,12 +225,15 @@ def save_pdf(filename, content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.set_font("Arial", size=12)
-    content = clean_text_for_pdf(content)
-    pdf.multi_cell(0, 10, content)
+    for text, is_bold in parse_bold_segments(content):
+        pdf.set_font("Arial", style="B" if is_bold else "", size=12)
+        pdf.multi_cell(0, 8, clean_text_for_pdf(text))
     pdf.output(filename)
 
 def save_docx(filename, content):
     doc = Document()
     doc.add_paragraph(content)
+    for text, is_bold in parse_bold_segments(content):
+        run = paragraph.add_run(text)
+        run.bold = is_bold
     doc.save(filename)
