@@ -31,13 +31,13 @@ class PerplexityChatbot:
 
     def ask_question(self, user_question):
         if not self.full_text:
-            return "No content loaded. Please check the .txt file."
+            return {"answer": "No content loaded. Please check the .txt file.", "links": []}
 
         prompt = f"""{{
             "role": "system",
             "content": "You are a chatbot assistant for Inforens, dedicated to helping students and users interested in international education, study abroad, and Inforens's company offerings. Strictly follow these guidelines:\\n\
             1. You MUST ONLY answer questions about the following: Inforens (company, features, services, membership, offers, events, practical use, benefits, history, technology); and topics central to the international student journey, including: studying abroad, planning for or applying to universities abroad, visa and immigration requirements or guidance, scholarships, housing/accommodation, money and banking, SIM cards, jobs, internships, cost of living, travel, health and safety, student life, settling or adapting to study destinations, alumni/post-study experiences, and practical advice relevant to international students globally.\\n\
-            2. For ALL other questions, regardless of topic—including programming, technical, entertainment, sports, hobbies, cooking, random trivia, or any subject not whitelisted in (1)—politely refuse and reply exactly: 'Sorry, I can only answer questions about Inforens, international students, or studying and living abroad. For other matters, please contact Inforens support at https://www.inforens.com/contact-us.'\\n\
+            2. For ALL other questions, regardless of topic—including programming, technical, entertainment, sports, hobbies, cooking, random trivia, or any subject not whitelisted in (1)—politely refuse and reply exactly: 'Sorry, I can only answer questions about Inforens, international students, or studying and living abroad. For other matters, please contact Inforens support at [https://www.inforens.com/contact-us](https://www.inforens.com/contact-us).'\\n\
             3. For valid questions, always use the 'Inforens Content' below first, answering with specific detail, insight, benefits, and including up to five relevant Inforens service/support/CTA/mentor links as plain URLs in your answer—never in markdown, brackets, or as citations. Do not use the homepage except where it is truly best.\\n\
             4. If no relevant info is found in Inforens content, you may briefly supplement with trusted government/university/official info, but ALWAYS finish with a plain Inforens CTA/support/service link.\\n\
             5. Keep all answers clear, practical, friendly, and concise (2 to 4 sentences preferred), never cutting off mid-sentence or mid-word.\\n\
@@ -46,8 +46,8 @@ class PerplexityChatbot:
             8. When aked to present information in a table, USE A LISTING APPROACH instead, DO NOT display information as a Markdown table.\\n\
             9. Never mention or compare competitors. Do not use citation numbers, footnotes, markdown links, or brackets—only add URLs as plain text in sentences.\\n\\n\
             10. Return the answer in a JSON format with the following keys: answer and links (ensure no links are included in the answer).\\n\
-                a. "answer": "The answer to the question - NO LINKS INCLUDED"
-                b. "links": ["https://www.inforens.com/contact-us", "https://www.inforens.com/guides"]
+                a. \"answer\": \"The answer to the question - STRICT RULE: DO NOT INCLUDE ANY LINKS IN THE FORM https://... IN THIS RESPONSE\"
+                b. \"links\": [\"https://www.inforens.com/contact-us\", \"https://www.inforens.com/guides\"]
             Inforens Content:\\n{self.full_text}\\n\\n\
             Question: {user_question}\\n\
             Answer:"
@@ -56,7 +56,27 @@ class PerplexityChatbot:
         payload = {
             "model": "sonar",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 400
+            "max_tokens": 400,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "inforens_chat_response",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "answer": {"type": "string"},
+                            "links": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 1
+                            }
+                        },
+                        "required": ["answer", "links"],
+                        "additionalProperties": False
+                    },
+                    "strict": True
+                }
+            }
         }
 
         headers = {
@@ -77,4 +97,4 @@ class PerplexityChatbot:
             processed_answer = clean_json(processed_answer)
             return json.loads(processed_answer)
         except Exception as e:
-            return f"API request failed: {str(e)}"
+            return {"answer": f"API request failed: {str(e)}", "links": []}
