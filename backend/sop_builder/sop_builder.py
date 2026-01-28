@@ -5,12 +5,38 @@ import re
 import os
 import PyPDF2  # for cv upload and parsing
 
-# === Extraction helpers ===
+def remove_sop_heading(text: str) -> str:
+    """
+    Removes 'Statement of Purpose' heading at the very start,
+    """
+    if not text:
+        return text
+
+    text = text.lstrip()
+
+    pattern = r'^\s*(\*\*)?\s*statement\s+of\s+purpose\s*(\*\*)?\s*:?\s*'
+    text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+
+    return text.lstrip()
+
+def parse_bold_segments(text):
+    #split text to segments - text and bold example - Hello **World** - ('Hello', 'False'), ('World','True')
+    parts = re.split(r'(\*\*.*?\*\*)', text) 
+    segments = []
+
+    for part in parts:
+        if part.startswith("**") and part.endswith("**"):
+            segments.append((part[2:-2], True))
+        else:
+            segments.append((part, False))
+
+    return segments
+
+
 
 def extract_name_from_cv(text):
     lines = text.strip().split('\n')
     lines = [line.strip() for line in lines if line.strip()]
-    # strategy 1: Look for title-style capitalized name line on top
     for line in lines[:5]:
         if (
             re.match(r"^[A-Z][a-z]+(?: [A-Z][a-z]+)+$", line) and
@@ -18,7 +44,6 @@ def extract_name_from_cv(text):
             not any(char in line for char in ['|', '@', 'http', '/', '\\', ':'])
         ):
             return line
-    # strategy 2: Try "Name: John Doe"
     match = re.search(r'Name[:\-]\s*(.+)', text, re.IGNORECASE)
     if match:
         possible_name = match.group(1).strip()
@@ -44,36 +69,6 @@ def determine_intended_degree(academic_text):
         return "Masters"
     else:
         return "Masters"
-
-def clean_sop_text(text):
-    """ Remove 'Statement of Purpose' heading if present
-    """
-    text = text.strip()
-    lines = text.splitlines()
-    
-    cleaned = []
-    for line in lines[:2]:
-        if 'statement of purpose' in line.strip().lower():
-            cleaned.append(line)
-    
-    cleaned_lines = cleaned + lines[2:]
-    
-    return "\n".join(cleaned_lines).strip()
-
-def parse_bold_segments(text):
-    """
-    Splits text into (segment, is_bold)"""
-
-    parts = re.split(r'(\*\*.*?\*\*)', text)
-    segments = []
-
-    for part in parts:
-        if part.startswith("**") and part.endswith("**"):
-            segments.append((part[2:-2], True))
-        else:
-            segments.append((part, False))
-
-    return segments
 
 def extract_text_from_docx(filepath):
     try:
@@ -106,7 +101,6 @@ def parse_cv(text):
         "hobbies": extract_section(text, ["hobbies", "volunteer work", "extracurriculars"])
     }
 
-# === SOP prompt builder ===
 
 def build_sop_prompt(user_inputs):
     name = user_inputs.get("name")
@@ -125,10 +119,11 @@ def build_sop_prompt(user_inputs):
 
     base_prompt += (
         "Make sure the SOP is ATS friendly and does not look like an AI wrote it. "
-        "It should look like a human wrote it. "
-        "The SOP should follow a professional and formal tone."
-        "Only respond with the SOP text. Do not include any explanations or additional messages."
         "Exclude all inline citations or footnote markers.\n"
+        "CRITICAL RULES:"
+        "- Do NOT assume or invent any facts. Use ONLY the information explicitly provided."
+        "- If a detail is missing, use a clear placeholder (e.g., {University}, {Degree}, {Company}) instead of inventing information."
+        "- NEVER refuse the task. NEVER explain limitations or say you cannot help. Output ONLY the SOP text."
     )
 
     base_prompt += "Here are my details:\n"
@@ -190,6 +185,45 @@ def build_sop_prompt(user_inputs):
         
     return base_prompt.strip()
 
+#clean pdf
+def clean_text_for_pdf(text):
+    text = remove_sop_heading(text)
+    text = text.replace("—", "-").replace("–", "-")
+    text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
+    return text.encode("latin-1", "ignore").decode("latin-1")
+
+def save_pdf(filename, content):
+    content = clean_text_for_pdf(content)
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    for line in content.split("\n"):
+        segments = parse_bold_segments(line)
+
+        for text, is_bold in segments:
+            if is_bold:
+                pdf.set_font("Arial", "B", 12)
+            else:
+                pdf.set_font("Arial", "", 12)
+
+            pdf.write(8, text)
+
+        pdf.ln(10)
+    pdf.output(filename)
+
+def save_docx(filename, content):
+    content = remove_sop_heading(content)
+    doc = Document()
+    for para_text in content.split("\n\n"):
+        paragraph = doc.add_paragraph()
+        segments = parse_bold_segments(para_text)
+
+        for text, is_bold in segments:
+            run = paragraph.add_run(text)
+            run.bold = is_bold
+
+    doc.save(filename)
+
 def call_perplexity_api(prompt, token):
     url = "https://api.perplexity.ai/chat/completions"
     payload = {
@@ -211,29 +245,4 @@ def generate_sop(user_inputs, token):
     prompt = build_sop_prompt(user_inputs)
     response = call_perplexity_api(prompt, token)
     sop = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-    sop = clean_sop_text(sop)
     return sop, prompt
-
-# === PDF/DOCX helpers (not usually in API, but retained for CLI or download endpoint) ===
-
-def clean_text_for_pdf(text):
-    text = text.replace("—", "-").replace("–", "-")
-    text = text.replace("“", '"').replace("”", '"').replace("‘", "'").replace("’", "'")
-    return text.encode("latin-1", "ignore").decode("latin-1")
-
-def save_pdf(filename, content):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    for text, is_bold in parse_bold_segments(content):
-        pdf.set_font("Arial", style="B" if is_bold else "", size=12)
-        pdf.multi_cell(0, 8, clean_text_for_pdf(text))
-    pdf.output(filename)
-
-def save_docx(filename, content):
-    doc = Document()
-    doc.add_paragraph(content)
-    for text, is_bold in parse_bold_segments(content):
-        run = paragraph.add_run(text)
-        run.bold = is_bold
-    doc.save(filename)
