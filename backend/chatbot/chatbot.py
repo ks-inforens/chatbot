@@ -87,6 +87,7 @@ class PerplexityChatbot:
             raw_answer = response.json()['choices'][0]['message']['content']
             processed_answer = extract_json_object(raw_answer) #extract json from response
             if not processed_answer:
+                print(raw_answer)
                 return {
                     "answer": "Sorry, I couldn’t generate a response right now. Please try again.",
                     "links": ["https://www.inforens.com/contact-us"]
