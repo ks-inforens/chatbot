@@ -57,7 +57,7 @@ def ask():
     ua = request.headers.get("User-Agent")
 
     try:
-        raw_answer = bot.ask_question(question)
+        raw_answer = bot.ask_question(question, session_id)
         latency_ms = int((time.time() - start) * 1000)
 
         query = Query(

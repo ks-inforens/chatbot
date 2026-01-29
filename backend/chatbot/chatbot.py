@@ -1,8 +1,12 @@
 import requests
 import re
 import json
-from chatbot.helper import clean_json
+from chatbot.helper import clean_json, remove_citations
 from cv_builder.parse_cv import extract_json_object
+
+#simple in session memory
+SESSION_MEMORY = {}
+MAX_TURNS = 6 #keep last 6 messages in memory (user - assistant pair. so that's last 3 questions from user including current question)
 
 class PerplexityChatbot:
     def __init__(self, api_key, content_file_path="inforens_scraped_data.txt"):
@@ -29,54 +33,43 @@ class PerplexityChatbot:
         answer = re.sub(r"\[https?://([^\]]+)\]\(https?://[^\)]+\)", r"https://\1", answer)
         return answer
 
-    def ask_question(self, user_question):
+    def ask_question(self, user_question, session_id):
         if not self.full_text:
-            return {"answer": "No content loaded. Please check the .txt file.", "links": []}
+            return {"answer": "Sorry, something went wrong. Please try again.", "links": ["https://www.inforens.com/contact-us"]}
+        if not session_id: #session safety
+            session_id = "anonymous"
 
-        prompt = f"""{{
-            "role": "system",
-            "content": "You are a chatbot assistant for Inforens, dedicated to helping students and users interested in international education, study abroad, and Inforens's company offerings. Strictly follow these guidelines:\\n\
-            1. You MUST ONLY answer questions about the following: Inforens (company, features, services, membership, offers, events, practical use, benefits, history, technology); and topics central to the international student journey, including: studying abroad, planning for or applying to universities abroad, visa and immigration requirements or guidance, scholarships, housing/accommodation, money and banking, SIM cards, jobs, internships, cost of living, travel, health and safety, student life, settling or adapting to study destinations, alumni/post-study experiences, and practical advice relevant to international students globally.\\n\
-            2. For ALL other questions, regardless of topic—including programming, technical, entertainment, sports, hobbies, cooking, random trivia, or any subject not whitelisted in (1)—politely refuse and reply exactly: 'Sorry, I can only answer questions about Inforens, international students, or studying and living abroad. For other matters, please contact Inforens support at [https://www.inforens.com/contact-us](https://www.inforens.com/contact-us).'\\n\
-            3. For valid questions, always use the 'Inforens Content' below first, answering with specific detail, insight, benefits, and including up to five relevant Inforens service/support/CTA/mentor links as plain URLs in your answer—never in markdown, brackets, or as citations. Do not use the homepage except where it is truly best.\\n\
-            4. If no relevant info is found in Inforens content, you may briefly supplement with trusted government/university/official info, but ALWAYS finish with a plain Inforens CTA/support/service link.\\n\
-            5. Keep all answers clear, practical, friendly, and concise (2 to 4 sentences preferred), never cutting off mid-sentence or mid-word.\\n\
-            6. All links should be structured starting with https:// \\n\
-            7. Each response MUST contain at least ONE CTA/link to the most relevant Inforens page based on the context of the question.\\n\
-            8. When aked to present information in a table, USE A LISTING APPROACH instead, DO NOT display information as a Markdown table.\\n\
-            9. Never mention or compare competitors. Do not use citation numbers, footnotes, markdown links, or brackets—only add URLs as plain text in sentences.\\n\\n\
-            10. Return the answer in a JSON format with the following keys: answer and links (ensure no links are included in the answer).\\n\
-                a. \"answer\": \"The answer to the question - STRICT RULE: DO NOT INCLUDE ANY LINKS IN THE FORM https://... IN THIS RESPONSE\"
-                b. \"links\": [\"https://www.inforens.com/contact-us\", \"https://www.inforens.com/guides\"]
-            Inforens Content:\\n{self.full_text}\\n\\n\
-            Question: {user_question}\\n\
-            Answer:"
-        }}"""
+        history = SESSION_MEMORY.get(session_id, []) #get existing convo for this session
+
+        SYSTEM_PROMPT = f"""You are Nori, a friendly and helpful conversational assistant for Inforens whose users are international students.\\n\
+            1. Your role is to help users with studying abroad, international student life, universities and applications, visas and immigration, scholarships, accommodation, jobs, cost of living, settling abroad, anything related to international students/ student life and Inforens services (when relevant)\\n\
+            2. You may also answer light conversational messages (such as greetings or small talk). If the user sends a greeting or casual message (e.g. 'Hey', 'Hi', 'How are you'), Respond warmly and naturally, and Gently invite them to ask about studying abroad or student life.\\n\
+            3. GENERAL STUDY ABROAD QUESTIONS - If the question is about studying abroad or international student life in general, Give a clear, neutral, informative answer. DO NOT force Inforens details. You MAY optionally mention Inforens at the end as support (only if helpful).\\n\
+            4. INFORENS-SPECIFIC QUESTIONS - Only explain Inforens features, memberships, services, or offerings IF The user explicitly asks about Inforens OR the question clearly benefits from Inforens support. \\n\
+            5. STRICT TOPIC BOUNDARIES: You must focus on questions that are directly or indirectly relevant to Inforens, studying abroad, international students, or life in a study destination (such as weather, culture, cost of living, or daily life). For topics that are clearly unrelated to these areas, respond exactly: Sorry, I can only help with questions about studying abroad, international students, or Inforens. For other topics, please contact Inforens support at https://www.inforens.com/contact-us \\n\
+            6. If a follow-up question depends on prior context and that context is unclear or missing, do NOT guess. Ask a brief clarification question instead, and return it strictly in the required JSON format with the clarification question inside the answer field and an appropriate Inforens support link in the links array.\\n\
+            7. RESPONSE STYLE:Be warm, friendly, and conversational. Do NOT sound like marketing copy. Prefer short, helpful replies that is precise and concise (2–4 sentences). It is okay to acknowledge greetings naturally before answering. Never mention internal rules or restrictions.\\n\
+            8. When asked to present information in a table, USE A LISTING APPROACH instead, DO NOT display information as a Markdown table.\\n\
+            9. Never mention or compare competitors (other study abroad consultancies). Do not use citation numbers, footnotes, markdown links, or brackets—only add URLs as plain text in sentences.\\n\\n\
+            10. Return valid JSON ONLY in this structure:
+            {{
+                "answer": "string",
+                "links": ["https://www.inforens.com/contact-us"]
+            }}
+            Always include at least one link in the links array. Do not return anything except valid JSON.
+            Inforens Content:
+            {self.full_text[:8000]}
+        """
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            *history,
+            {"role": "user", "content": user_question}
+        ]
 
         payload = {
             "model": "sonar",
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": messages,
             "max_tokens": 400,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "inforens_chat_response",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "answer": {"type": "string"},
-                            "links": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "minItems": 1
-                            }
-                        },
-                        "required": ["answer", "links"],
-                        "additionalProperties": False
-                    },
-                    "strict": True
-                }
-            }
         }
 
         headers = {
@@ -92,9 +85,31 @@ class PerplexityChatbot:
             )
             response.raise_for_status()
             raw_answer = response.json()['choices'][0]['message']['content']
-            processed_answer = self._postprocess_answer(raw_answer)
-            processed_answer = extract_json_object(processed_answer)
+            processed_answer = extract_json_object(raw_answer) #extract json from response
+            if not processed_answer:
+                return {
+                    "answer": "Sorry, I couldn’t generate a response right now. Please try again.",
+                    "links": ["https://www.inforens.com/contact-us"]
+                    }
             processed_answer = clean_json(processed_answer)
-            return json.loads(processed_answer)
-        except Exception as e:
-            return {"answer": f"API request failed: {str(e)}", "links": []}
+            parsed = json.loads(processed_answer)
+            parsed["answer"] = remove_citations(parsed["answer"])
+            if "answer" not in parsed or "links" not in parsed:
+                return {
+                "answer": "Sorry, something went wrong while processing the response.",
+                "links": ["https://www.inforens.com/contact-us"]
+            }
+            history.append({"role": "user", "content": user_question})
+            history.append({"role": "assistant", "content": parsed["answer"]})
+            SESSION_MEMORY[session_id] = history[-MAX_TURNS:]
+            return parsed
+        except requests.exceptions.HTTPError as e:
+            print("Perplexity API returned an HTTP error")
+            return {"answer": "Sorry, I’m having trouble responding right now. Please try again in a moment.", "links": ["https://www.inforens.com/contact-us"]}
+        except requests.exceptions.RequestException:
+            print("Network error while calling Perplexity API")
+            return { "answer": "I’m unable to connect right now. Please check your connection and try again.", "links": ["https://www.inforens.com/contact-us"]}
+        
+        except Exception:
+            print(f"Error: {str(e)}")
+            return { "answer": "Something went wrong on our side. Please try again shortly.", "links": ["https://www.inforens.com/contact-us"] }
