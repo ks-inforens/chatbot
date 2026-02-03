@@ -5,13 +5,14 @@ import os
 from db import db, init_db
 from routes import bp
 from flask_swagger_ui import get_swaggerui_blueprint
+from models import Query, CVUpload
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 load_dotenv()
 app = Flask(__name__)
-
+CORS(app)
 SWAGGER_URL = "/apidocs"       
 API_URL = "/swagger.yaml"   
 

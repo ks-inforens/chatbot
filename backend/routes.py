@@ -129,9 +129,11 @@ def transcribe():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@bp.route("/scholarships", methods=["POST"])
+@bp.route("/scholarships", methods=["POST", "OPTIONS"])
 @swag_from('specs/api_spec.yaml', endpoint='api.scholarships')
 def scholarships():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
     try:
         data = request.get_json(silent=True) or {}
         required_fields = ["citizenship", "preferred_country", "level", "field"]
@@ -143,12 +145,15 @@ def scholarships():
         prompt = scholarship_prompt(data)
         results = fetch_scholarships(prompt)  
 
-        results = extract_json_object(results)
-
-        scholarships_data = json.loads(results)
-
+        #result is already a dict now
+        if results.get("error"):
+            return jsonify({
+                "error": results["error"],
+                "scholarships": []
+            }), 200
+        
         return jsonify({
-            "scholarships": scholarships_data["scholarships"],  
+            "scholarships": results["scholarships"],  
             "prompt": prompt
         })
 
@@ -172,7 +177,7 @@ def sop():
         sop, prompt = generate_sop(data, token)
 
         if not sop:
-            return jsonify({"error": "Failed to generate SOP"}), 500
+            return jsonify({"error": "Unable to generate SOP right now. Please try again later."}), 200
 
         return jsonify({
             "sop": sop,

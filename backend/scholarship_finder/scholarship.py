@@ -1,4 +1,33 @@
 import requests
+import json
+import re
+
+def extract_json_object(text):
+    if not text:
+        return None
+    
+    #remove markdown code blocks
+    text = re.sub(r'^```(?:json)?\s*', '', text.strip())
+    text = re.sub(r'```\s*$', '', text.strip())
+    
+    #find the first { and last }
+    start = text.find('{')
+    end = text.rfind('}')
+    
+    if start == -1 or end == -1:
+        return None
+    
+    return text[start:end+1]
+
+def clean_json(text):
+
+    if not text:
+        return text
+    
+    # Remove trailing commas before closing braces/brackets
+    text = re.sub(r',(\s*[}\]])', r'\1', text)
+    
+    return text.strip()
 
 def get_user_details():
     print("Please enter your details below.")
@@ -36,6 +65,8 @@ def build_prompt(user):
         "You are an expert on global scholarships. A student has provided their profile details:\n",
     ]
 
+    if isinstance(user.get("preferred_universities"), str):
+        user["preferred_universities"] = [user["preferred_universities"]]
     if user.get('citizenship'):
         lines.append(f"Citizenship: {user['citizenship']}")
     if user.get('level'):
@@ -52,18 +83,25 @@ def build_prompt(user):
         lines.append(f"Preferred university: {user['preferred_universities']}")
     if user.get('course_intake'):
         lines.append(f"Course intake: {user['course_intake']}")
-    if user.get('age'):
-        lines.append(f"Date of Birth: {user['dob']} - use this to calculate age")
+    if user.get('dob'):
+        lines.append(f"Date of Birth: {user['dob']}")
     if user.get('gender'):
         lines.append(f"Gender: {user['gender']}")
-    if len(user.get("activity", [])) > 0:
-        lines.append(f"Extracurricular activities: {user['activity'][0]['description']}")
+    activities = user.get("activity") or user.get("extracurricular")
+    if isinstance(activities, list):
+        desc = activities[0].get("description")
+        if desc:
+            lines.append(f"Extracurricular activities: {desc}")
+    elif isinstance(activities, str) and activities.strip():
+        lines.append(f"Extracurricular activities: {activities}")
 
     lines.append("""
-Based on this information, recommend the most relevant scholarships for this student.
+Based on this information, recommend relevant scholarships for this student. If no exact matches exist, recommend the closest applicable international scholarships.
+Do NOT return an empty list unless no scholarships exist worldwide.
 Respond ONLY with a SINGLE valid JSON object with a key "scholarships" whose value is an array of objects, each object has:
   - "name": Name of the scholarship.
   - "description": A SHORT description of the scholarship, maximum 20 words.
+  - "deadline": Deadline of the scholarship (approximate)
 
 Example output:
 {
@@ -102,14 +140,67 @@ def fetch_scholarships(prompt):
         "reasoning_effort": "medium"
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        content = response.json()["choices"][0]["message"]["content"]
 
-    if response.status_code == 200:
-        data = response.json()
-        output = data["choices"][0]["message"]["content"]
-        return output
-    else:
-        raise Exception(f"Error {response.status_code}: {response.text}")
+        print("RAW PERPLEXITY OUTPUT:\n", content)
+        #if empty / none / whitespace output from perplexity
+        if not content or not content.strip():
+            return {
+                "scholarships": [],
+                "error": "Something went wrong. Please try again."
+            }
+        
+        extracted = extract_json_object(content) #extract json object
+
+        #if no json object extracted from perplexity
+        if not extracted:
+            return {
+                "scholarships": [],
+                "error": "Something went wrong. Please try again shortly."
+            }
+        
+        cleaned = clean_json(extracted)
+
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError: #invalid json
+            return {
+                "scholarships": [],
+                "error": "We ran into an issue while finding scholarships. Please try again shortly."
+            }
+        
+        if not isinstance(parsed, dict) or "scholarships" not in parsed: #to handle random structure in json
+            return {
+                "scholarships": [],
+                "error": "We couldn’t find valid scholarships for your profile. Please try again."
+            }
+
+        if not isinstance(parsed["scholarships"], list): #ensure scholarships is actually a list
+            return {
+                "scholarships": [],
+                "error": "We couldn’t find valid scholarships for your profile. Please try again."
+            }
+
+        # success
+        return {
+            "scholarships": parsed["scholarships"],
+            "error": None
+        }
+
+    except requests.exceptions.RequestException: #perplexity not reachable
+        return {
+            "scholarships": [],
+            "error": "Unable to connect right now. Please check your connection and try again."
+        }
+
+    except Exception:  #other exceptions
+        return {
+            "scholarships": [],
+            "error": "Something went wrong on our side. Please try again shortly."
+        }
 
 if __name__ == "__main__":
     user_data = get_user_details()

@@ -109,7 +109,7 @@ export default function ScholarshipFinderPage() {
       preferred_universities: form.university ? [form.university] : [],
       field: form.field,
       course_intake: form.intake || null,
-      academic_perf: form.education || [],
+      academic_perf: form.education?.length ? form.education : form.academic_perf || null,
       dob: form.dob || null,
       gender: form.gender || null,
       disability:
@@ -118,7 +118,7 @@ export default function ScholarshipFinderPage() {
           : form.disability === "No"
             ? "No"
             : null,
-      activity: form.activity,
+      extracurricular: form.extracurricular || null,
     };
   };
 
@@ -131,7 +131,7 @@ export default function ScholarshipFinderPage() {
     setResults([]);
     try {
       const payload = toBackendPayload(form);
-      const response = await fetch(`${API_BASE_URL}/scholarships`, {
+      const response = await fetch(`${API_BASE_URL}/api/scholarships`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

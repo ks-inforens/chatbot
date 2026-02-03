@@ -141,7 +141,7 @@ def build_sop_prompt(user_inputs):
         value = user_inputs.get(key)
         if value:
             base_prompt += f"{label} {value}.\n"
-
+    
     if len(user_inputs.get("projects")) > 0:
         base_prompt += "I have also completed these projects/research/publications:\n"
         for p in user_inputs.get("projects"):
@@ -235,8 +235,18 @@ def call_perplexity_api(prompt, token):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-    response = requests.post(url, json=payload, headers=headers)
-    return response.json()
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException:
+        return {
+            "choices": [{
+                "message": {
+                    "content": ""
+                }
+            }]
+        }
 
 # === Exported function for API use ===
 
@@ -245,4 +255,6 @@ def generate_sop(user_inputs, token):
     prompt = build_sop_prompt(user_inputs)
     response = call_perplexity_api(prompt, token)
     sop = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+    if not sop:
+        return None, prompt
     return sop, prompt

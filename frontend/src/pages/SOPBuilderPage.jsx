@@ -67,7 +67,7 @@ export default function SOPBuilderPage() {
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/sop`, {
+            const response = await fetch(`${API_BASE_URL}/api/sop`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -95,7 +95,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/sop/download/pdf`, {
+            const response = await fetch(`${API_BASE_URL}/api/sop/download/pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
@@ -119,7 +119,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/sop/download/docx`, {
+            const response = await fetch(`${API_BASE_URL}/api/sop/download/docx`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
