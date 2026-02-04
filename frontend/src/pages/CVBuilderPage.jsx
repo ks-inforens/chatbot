@@ -32,7 +32,7 @@ export default function CVBuilderPage() {
         languagesKnown: [],
         certificates: [],
         projects: [],
-        links: [{name: "LinkedIn", url: ""}],
+        links: [{ name: "LinkedIn", url: "" }],
         additionalSec: [],
     });
 
@@ -112,8 +112,11 @@ export default function CVBuilderPage() {
             });
 
             if (!response.ok) {
-                const data = await response.json();
-                setError(data.error || "Failed to generate CV.");
+                let data = {};
+                try {
+                    data = await response.json();
+                } catch (_) { }
+                setError(data.error || "Something went wrong. Sorry, we couldn't generate your CV right now. Please try again in sometime.");
             } else {
                 const blob = await response.blob();
                 setGeneratedCV(blob)
@@ -275,6 +278,18 @@ export default function CVBuilderPage() {
                         onSubmit={handleSubmit}
                         headerInc={false}
                     />
+                    <footer className="flex flex-col gap-1 text-black/60 text-xs italic border-t border-black/20 pt-4 mt-8 px-2">
+                        <p className="font-semibold ">AI-generated draft</p>
+                        <p>
+                            This CV is generated using AI based on the details you provided.
+                            While we strive for accuracy, the draft may contain assumptions or inconsistencies.
+                            Please review, edit, and personalise it before submitting.
+
+                        </p>
+                        <p>
+                            For expert guidance, you can <a href="https://www.inforens.com/guides" target="_blank" className="text-orange-700 underline">connect with our mentors</a> for a final review or directly <a href="https://www.inforens.com/contact-us" target="_blank" className="text-orange-700 underline">contact us</a>!
+                        </p>
+                    </footer>
                 </div>
             )}
         </div>
