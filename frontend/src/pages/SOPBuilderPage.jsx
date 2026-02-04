@@ -46,6 +46,7 @@ export default function SOPBuilderPage() {
         setLoading(true);
         setError("");
         setSopResult("");
+        setStep(3);
 
         const payload = {
             name: form.firstName + " " + form.lastName,
@@ -67,7 +68,7 @@ export default function SOPBuilderPage() {
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/sop`, {
+            const response = await fetch(`${API_BASE_URL}/sop`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -81,7 +82,6 @@ export default function SOPBuilderPage() {
                 setError(data.error || "Failed to generate SOP.");
             } else {
                 setSopResult(data.sop);
-                setStep(3);
             }
         } catch (e) {
             setError("Network error: " + e.message);
@@ -95,7 +95,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/sop/download/pdf`, {
+            const response = await fetch(`${API_BASE_URL}/sop/download/pdf`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
@@ -119,7 +119,7 @@ export default function SOPBuilderPage() {
         setError("");
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/sop/download/docx`, {
+            const response = await fetch(`${API_BASE_URL}/sop/download/docx`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ sop: sopResult }),
@@ -168,7 +168,6 @@ export default function SOPBuilderPage() {
                             Here is your expertly crafted SOP
                         </p>
                     </div>
-                    {error && <p className="text-red-600 mb-4"></p>}
                     <div className="w-full flex gap-4 mb-4">
                         <button
                             onClick={() => {
@@ -196,7 +195,32 @@ export default function SOPBuilderPage() {
                             Download as DOCX
                         </button>
                     </div>
+                    {error &&
+                        <div className="flex flex-col gap-1 text-sm mt-4 px-2">
+                            <p className="font-medium">
+                                We could not generate your SOP this time!
+                            </p>
+                            <p>
+                                This can happen occasionally.
+                                You can try again after some time.
+                            </p>
+                            <a href="https://www.inforens.com/contact-us" target="_blank" className="font-medium underline text-orange-700">Contact Us</a>
+                        </div>
+                    }
                     <p className="whitespace-pre-wrap text-justify text-black/80 text-sm max-w-[80vw] px-2 py-2">{sopResult}</p>
+                    <footer className="flex flex-col gap-1 text-xs text-black/60 italic py-4 px-2 mt-6 border-t border-black/20">
+                        <p className="font-semibold">
+                            AI-generated draft
+                        </p>
+                        <p>
+                            This Statement of Purpose is generated using AI based on the details you provided.
+                            While we strive for accuracy, the draft may contain assumptions or inconsistencies.
+                            Please review, edit, and personalise it before submitting.
+                        </p>
+                        <p>
+                            For expert guidance, you can <a href="https://www.inforens.com/guides" target="_blank" className="underline text-orange-700"></a>connect with our mentors for a final review or directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+                        </p>
+                    </footer>
                 </div>
             )}
         </div>

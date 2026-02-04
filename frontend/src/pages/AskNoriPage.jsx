@@ -290,20 +290,20 @@ export default function AskNoriPage() {
                             placeholder="Type your question..."
                             disabled={loading}
                         />
-                        <div className="flex items-center hover:bg-gray-100 justify-center p-2 rounded-full cursor-pointer">
+                        <div className={`flex items-center hover:bg-gray-100 justify-center p-2 rounded-full ${loading ? "pointer-events-none" : "cursor-pointer"}`}>
                             <button className="text-sm" type="submit">
                                 <Send className="text-black/80 cursor-pointer" size={18} />
                             </button>
                         </div>
                         <div
-                            className={`flex items-center justify-center p-2 rounded-full cursor-pointer ${listening || isRecording ? "bg-amber-600 hover:bg-amber-700" : "hover:bg-gray-100"
+                            className={`flex items-center justify-center p-2 rounded-full ${loading ? "pointer-events-none" : "cursor-pointer"} ${listening || isRecording ? "bg-amber-600 hover:bg-amber-700" : "hover:bg-gray-100"
                                 }`}
                         >
                             <button type="button" onClick={handleMicClick}>
                                 {listening || isRecording ? (
-                                    <FaSquareFull className="cursor-pointer text-white p-1" size={18} />
+                                    <FaSquareFull className="text-white p-1" size={18} />
                                 ) : (
-                                    <FaMicrophone className={`cursor-pointer text-black/80`} size={18} />
+                                    <FaMicrophone className={`text-black/80`} size={18} />
                                 )}
                             </button>
                         </div>

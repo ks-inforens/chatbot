@@ -10,15 +10,37 @@ function ScholarshipResults({ scholarships, error, onBack }) {
       <h1 className="text-3xl mb-4">Scholarship Finder</h1>
 
       {error && (
-        <div className="text-red-600 mb-6 text-lg font-medium">
-          <b>Sorry!</b> {error}
+        <>
           <button
-            className="ml-4 px-6 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800 cursor-pointer transition"
             onClick={onBack}
+            className="text-xs py-3 md:py-0 flex flex-col md:flex-row gap-1.5 items-center px-4 min-h-8 text-black/80 bg-black/5 rounded-2xl hover:bg-black/10 mb-6 cursor-pointer"
           >
-            Back
+            <Search className="inline w-4 h-4" />
+            Find Again
           </button>
-        </div>
+          <div className="flex flex-col gap-1 text-sm mt-4 px-2">
+            <p className="font-medium">
+              We could not find your scholarships at this time!
+            </p>
+            <p>
+              This can happen occasionally.
+              You can try again after some time.
+            </p>
+            <a href="https://www.inforens.com/contact-us" target="_blank" className="font-medium underline text-orange-700">Contact Us</a>
+          </div>
+          <footer className="flex flex-col gap-1 text-xs text-black/60 italic py-4 px-2 mt-6 border-t border-black/20">
+            <p className="font-semibold">
+              AI-generated draft
+            </p>
+            <p>
+              This response is generated using AI based on the details you provided.
+              While we strive for accuracy, it may contain assumptions or inconsistencies.
+            </p>
+            <p>
+              For expert guidance, you can directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+            </p>
+          </footer>
+        </>
       )}
 
       {!error && scholarships.length > 0 && (
@@ -61,6 +83,18 @@ function ScholarshipResults({ scholarships, error, onBack }) {
               );
             })}
           </div>
+          <footer className="flex flex-col gap-1 text-xs text-black/60 italic py-4 px-2 mt-6 border-t border-black/20">
+            <p className="font-semibold">
+              AI-generated
+            </p>
+            <p>
+              This response is generated using AI based on the details you provided.
+              While we strive for accuracy, it may contain assumptions or inconsistencies.
+            </p>
+            <p>
+              For expert guidance, you can directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+            </p>
+          </footer>
         </>
       )}
 
@@ -92,7 +126,7 @@ export default function ScholarshipFinderPage() {
     dob: "",
     gender: "",
     genderDetails: "",
-    activity: [{type: "Extracurriculars", description : "" }],
+    activity: [{ type: "Extracurriculars", description: "" }],
     education: [],
   });
 
@@ -128,10 +162,11 @@ export default function ScholarshipFinderPage() {
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
+    setStep(3);
     setResults([]);
     try {
       const payload = toBackendPayload(form);
-      const response = await fetch(`${API_BASE_URL}/api/scholarships`, {
+      const response = await fetch(`${API_BASE_URL}/ascholarships`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +178,6 @@ export default function ScholarshipFinderPage() {
         setError(data.error || "Server error. Try again.");
       } else {
         setResults(Array.isArray(data.scholarships) ? data.scholarships : []);
-        setStep(3);
       }
     } catch (e) {
       setError("Network error: " + e.message);

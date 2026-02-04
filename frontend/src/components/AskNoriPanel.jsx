@@ -326,7 +326,7 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
             />
             <button
               type="submit"
-              className="send-btn cursor-pointer"
+              className={`send-btn ${loading ? "pointer-events-none" : "cursor-pointer"}`}
               aria-label="send"
               disabled={loading}
             >
@@ -334,10 +334,11 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
             </button>
             <button
               type="button"
-              className={`mic-btn cursor-pointer ${listening || isRecording ? "listening" : ""}`}
+              className={`mic-btn ${loading ? "pointer-events-none" : "cursor-pointer"} ${listening || isRecording ? "listening" : ""}`}
               onClick={handleMicClick}
               title={listening || isRecording ? "Stop Listening" : "Speak"}
               aria-label="microphone"
+              disabled={loading}
             >
               {listening || isRecording ? (
                 <CircleStop size={18} />
@@ -345,7 +346,9 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
                 <Mic size={18} color={listening || isRecording ? "#FF5722" : "#333"} />
               )}
             </button>
-            <FeaturesDropdown onFeatureSelect={onFeatureSelect} />
+            <div className={loading ? "pointer-events-none" : "cursor-pointer"}>
+              <FeaturesDropdown onFeatureSelect={onFeatureSelect} />
+            </div>
           </div>
         </div>
       </form>
