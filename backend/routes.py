@@ -255,9 +255,11 @@ def sop_download_docx():
         current_app.logger.error(f"Error in /sop/download/docx: {e}")
         return {"error": str(e)}, 500
 
-@bp.route("/cv/download/docx", methods=["POST"])
+@bp.route("/cv/download/docx", methods=["POST", "OPTIONS"])
 @swag_from('specs/api_spec.yaml', endpoint='api.cv_download_docx')
 def cv_download_docx():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
     try:
         data = request.get_json()
         if not data:
@@ -269,8 +271,6 @@ def cv_download_docx():
 
         user_data = _extract_user_data(data, workflow)
         generated_cv = call_perplexity(cv_prompt(user_data))
-
-        print("Generated CV:\n" + generated_cv)
 
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".docx")
         tmp.close()
@@ -293,9 +293,17 @@ def cv_download_docx():
         return response
 
     except Exception as e:
+        msg = str(e)
+        if msg in ["EMPTY_MODEL_RESPONSE", "INVALID_MODEL_OUTPUT", "LLM_UNAVAILABLE"]:
+            return jsonify({
+                "error": "Sorry, we couldn’t generate your CV right now. Please try again in a moment."
+                }), 503
+
         current_app.logger.error(f"Error in /cv/download/docx: {e}")
-        return {"error": str(e)}, 500
-    
+        return jsonify({
+            "error": "Something went wrong. Please try again."
+        }), 500
+
 @bp.route("/cv/generate/coverLetter", methods=["POST"])
 @swag_from('specs/api_spec.yaml', endpoint='api.generate_cover_letter')
 def generate_cover_letter():

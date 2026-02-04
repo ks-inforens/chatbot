@@ -115,8 +115,8 @@ export default function CVBuilderPage() {
                 let data = {};
                 try {
                     data = await response.json();
-                } catch (_) { }
-                setError(data.error || "Something went wrong. Sorry, we couldn't generate your CV right now. Please try again in sometime.");
+                } catch (_) {}
+                setError(data.error || "Something went wrong. Sorry, we couldn’t generate your CV right now. Please try again in sometime.");
             } else {
                 const blob = await response.blob();
                 setGeneratedCV(blob)
