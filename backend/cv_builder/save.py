@@ -4,6 +4,35 @@ from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+import re
+
+def add_markdown_text(paragraph, text):
+    """
+    Converts markdown (**bold**, *italic*) into Word runs.
+    """
+    if not text:
+        return
+
+    pattern = re.compile(r'(\*\*.+?\*\*|\*.+?\*)')
+    parts = pattern.split(text)
+
+    for part in parts:
+        if not part:
+            continue
+
+        # **bold**
+        if part.startswith("**") and part.endswith("**"):
+            run = paragraph.add_run(part[2:-2])
+            run.bold = True
+
+        # *italic*
+        elif part.startswith("*") and part.endswith("*"):
+            run = paragraph.add_run(part[1:-1])
+            run.italic = True
+
+        # normal text
+        else:
+            paragraph.add_run(part)
 
 def ensure_full_url(url):
     if not url.startswith(("http://", "https://")):
@@ -81,7 +110,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
 
     style = doc.styles['Normal']
     font = style.font
-    font.name = 'Seaford Display'
+    font.name = 'Times New Roman'
     font.size = Pt(10)
     style.paragraph_format.space_after = Pt(4)
 
@@ -114,16 +143,18 @@ def save_as_docx(text, filename="generated_cv.docx"):
     if full_name:
         para = doc.add_paragraph()
         para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        run = para.add_run(full_name)
-        run.bold = True
-        run.font.size = Pt(16)
+        add_markdown_text(para, full_name)
+        for run in para.runs:
+            run.bold = True
+            run.font.size = Pt(16)
 
     location = data.get("location", "")
     if location:
         para = doc.add_paragraph()
         para.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-        run = para.add_run(location)
-        run.font.size = Pt(10)
+        add_markdown_text(para, location)
+        for run in para.runs:
+            run.font.size = Pt(10)
 
     # === Contact Information ===
     email = data.get("email", "")
@@ -155,7 +186,8 @@ def save_as_docx(text, filename="generated_cv.docx"):
     prof_stmt = data.get("professional_statement", "")
     if prof_stmt:
         add_section_header("Professional Statement")
-        doc.add_paragraph(prof_stmt)
+        p = doc.add_paragraph()
+        add_markdown_text(p, prof_stmt)
 
     # Prepare conditional order for Work Experience and Education
     work_exp = data.get("work_experience", [])
@@ -177,9 +209,10 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     dates = f"{start_date} - Present"
 
                 para = doc.add_paragraph()
-                run = para.add_run(job_title)
-                run.bold = True
-                run.italic = True
+                add_markdown_text(para, job_title)
+                for run in para.runs:
+                    run.bold = True
+                    run.italic = True
                 if company_name:
                     run_comp = para.add_run(f" | {company_name}")
                     run_comp.bold = True
@@ -197,13 +230,13 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     run_date.italic = True
 
                 for resp in job.get("responsibilities", []):
-                    bullet = doc.add_paragraph(resp, style="List Bullet")
+                    bullet = doc.add_paragraph(style="List Bullet")
+                    add_markdown_text(bullet, resp)
                     bullet.paragraph_format.space_after = Pt(2)
 
                 for ach in job.get("achievements", []):
-                    bullet = doc.add_paragraph(
-                        "Achievement: " + ach, style="List Bullet"
-                    )
+                    bullet = doc.add_paragraph(style="List Bullet")
+                    add_markdown_text(bullet, ach)
                     bullet.paragraph_format.space_after = Pt(2)
 
     def write_education():
@@ -223,9 +256,10 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     dates = f"{start_date} - Present"
 
                 para = doc.add_paragraph()
-                run = para.add_run(uni)
-                run.bold = True
-                run.italic = True
+                add_markdown_text(para, uni)
+                for run in para.runs:
+                    run.bold = True
+                    run.italic = True
                 if dates:
                     tab_stop = (
                         doc.sections[0].page_width
@@ -240,9 +274,11 @@ def save_as_docx(text, filename="generated_cv.docx"):
 
                 degree_field = f"{course} - {discipline}".strip(" -")
                 if degree_field:
-                    doc.add_paragraph(degree_field)
+                    p = doc.add_paragraph()
+                    add_markdown_text(p, degree_field)
                 if result:
-                    doc.add_paragraph(f"Result: {result}")
+                    p = doc.add_paragraph()
+                    add_markdown_text(p, f"Result: {result}")
 
     if len(work_exp) > 1:
         write_work_experience()
@@ -262,9 +298,10 @@ def save_as_docx(text, filename="generated_cv.docx"):
             type_ = proj.get("type", "")
 
             para = doc.add_paragraph()
-            run = para.add_run(title)
-            run.bold = True
-            run.italic = True
+            add_markdown_text(para, title)
+            for run in para.runs:
+                run.bold = True
+                run.italic = True
             if type_:
                 run_type = para.add_run(f" [{type_}]")
                 run_type.italic = True
@@ -274,13 +311,14 @@ def save_as_docx(text, filename="generated_cv.docx"):
                 add_hyperlink(para, link, link)
 
             if desc:
-                doc.add_paragraph(desc, style="List Bullet")
+                p = doc.add_paragraph(style="List Bullet")
+                add_markdown_text(p, desc)
 
     # === 5. Skills ===
     skills = data.get("skills", [])
     if skills:
-        add_section_header("Skills")
-        doc.add_paragraph(", ".join(skills))
+        p = doc.add_paragraph()
+        add_markdown_text(p, ", ".join(skills))
 
     # === 6. Certifications ===
     certs = data.get("certifications", [])
@@ -318,7 +356,8 @@ def save_as_docx(text, filename="generated_cv.docx"):
         elif title and desc:
             add_section_header(title)
             for paragraph in desc.split("\n"):
-                doc.add_paragraph(paragraph.strip())
+                p = doc.add_paragraph()
+                add_markdown_text(p, paragraph.strip())
 
     doc.save(filename)
     print(f"DOCX saved as {filename}")

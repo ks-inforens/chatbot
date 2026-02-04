@@ -2,6 +2,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
@@ -132,7 +133,27 @@ def call_perplexity(prompt):
 
     response = requests.post(url, json=payload, headers=headers)
 
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
-        raise Exception(f"Perplexity API Error: {response.status_code} {response.text}")
+    #not able to reach
+    if response.status_code != 200:
+        raise Exception("LLM_UNAVAILABLE")
+
+    data = response.json()
+
+    #no choices
+    if "choices" not in data or not data["choices"]:
+        raise Exception("EMPTY_MODEL_RESPONSE")
+
+    message = data["choices"][0].get("message", {})
+    content = message.get("content")
+
+    #empty content
+    if not content or not content.strip():
+        raise Exception("EMPTY_MODEL_RESPONSE")
+
+    #invalid JSON
+    try:
+        json.loads(content)
+    except Exception:
+        raise Exception("INVALID_MODEL_OUTPUT")
+
+    return content
