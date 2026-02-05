@@ -179,8 +179,8 @@ export default function AskNoriPage() {
         setLoading(true);
 
         try {
-            const { answer, messageId } = await askQuestion(question, sessionId, userId);
-            setMessages((prev) => [...prev, { id: messageId, role: "assistant", content: answer, feedback: {} }]);
+            const { answer, links, messageId } = await askQuestion(question, sessionId, userId);
+            setMessages((prev) => [...prev, { id: messageId, role: "assistant", content: answer, links: links, feedback: {} }]);
         } catch {
             setMessages((prev) => [...prev, { id: uid(), role: "assistant", content: "Sorry, something went wrong." }]);
         } finally {
@@ -236,6 +236,16 @@ export default function AskNoriPage() {
                                 >
                                     {m.content}
                                 </ReactMarkdown>
+                                {m.role === "assistant" && (
+                                    <div>
+                                        <p className="font-medium">Related Links:</p>
+                                        {m.links?.map((link, i) => (
+                                            <div key={i}>
+                                                <a href={link} target="_blank" className="text-orange-700 hover:font-medium underline">{link}</a><br />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             {m.role === "assistant" && (
                                 <div className="flex mt-4">
