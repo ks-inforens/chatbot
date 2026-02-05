@@ -1,3 +1,4 @@
+import json
 import requests  # for perplexity
 from fpdf import FPDF  # to download sop as pdf
 from docx import Document  # to download sop as doc
@@ -229,7 +230,25 @@ def call_perplexity_api(prompt, token):
     payload = {
         "model": "sonar",
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 2048
+        "max_tokens": 2048,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "sop_response",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "sop": {
+                            "type": "string",
+                            "description": "The full Statement of Purpose text"
+                        },
+                    },
+                    "required": ["sop"],
+                    "additionalProperties": False
+                }
+            }
+        }
     }
     headers = {
         "Authorization": f"Bearer {token}",
@@ -254,7 +273,14 @@ def generate_sop(user_inputs, token):
     """CORE function for Flask API, returns (sop, prompt)"""
     prompt = build_sop_prompt(user_inputs)
     response = call_perplexity_api(prompt, token)
-    sop = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-    if not sop:
+    content = response.get("choices", [{}])[0].get("message", {}).get("content").strip()
+    if not content:
         return None, prompt
+
+    try:
+        data = json.loads(content)
+        sop = data.get("sop", "").strip()
+    except (json.JSONDecodeError, KeyError):
+        sop = content.strip()
+
     return sop, prompt
