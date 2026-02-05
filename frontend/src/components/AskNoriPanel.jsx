@@ -233,6 +233,15 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
           <p className="text-gray-500 tracking-tight text-sm">
             Ask me anything about studying abroad!
           </p>
+          <div className="flex flex-col gap-1 text-[11px] text-left text-black/40 italic pt-4 px-2 mt-4 border-t border-black/10">
+            <p>
+              Please note that these responses are generated using AI based on your questions.
+              While we strive for accuracy, it may contain assumptions or inconsistencies.
+            </p>
+            <p>
+              For expert guidance, you can directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+            </p>
+          </div>
         </div>
       )}
 

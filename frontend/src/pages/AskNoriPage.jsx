@@ -320,6 +320,18 @@ export default function AskNoriPage() {
                     </div>
                 </div>
             </form>
+            <footer className="flex flex-col gap-1 text-xs text-black/60 italic py-4 px-2 mt-6 border-t border-black/20">
+                <p className="font-semibold">
+                    AI-generated
+                </p>
+                <p>
+                    Please note that these responses are generated using AI based on your questions.
+                    While we strive for accuracy, it may contain assumptions or inconsistencies.
+                </p>
+                <p>
+                    For expert guidance, you can directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+                </p>
+            </footer>
         </div>
     );
 }
