@@ -180,20 +180,24 @@ export default function SOPBuilderPage() {
                             <WandSparkles className="inline w-5 h-5" />
                             Regenerate SOP
                         </button>
-                        <button
-                            onClick={handleDownloadPDF}
-                            className="text-xs py-3 md:py-0 px-4 min-h-8 flex flex-col md:flex-row gap-1.5 items-center bg-black/5 text-black/80 hover:bg-black/10 cursor-pointer rounded-2xl"
-                        >
-                            <img src="/pdfIcon.png" alt="PDF Icon" className="inline w-5 h-5" />
-                            Download as PDF
-                        </button>
-                        <button
-                            onClick={handleDownloadDOCX}
-                            className="text-xs py-3 md:py-0 px-4 min-h-8 flex flex-col md:flex-row gap-1.5 items-center bg-black/5 text-black/80 hover:bg-black/10 cursor-pointer rounded-2xl"
-                        >
-                            <img src="/docxIcon.png" alt="Docx Icon" className="inline w-5 h-5" />
-                            Download as DOCX
-                        </button>
+                        {!error &&
+                            <>
+                                <button
+                                    onClick={handleDownloadPDF}
+                                    className="text-xs py-3 md:py-0 px-4 min-h-8 flex flex-col md:flex-row gap-1.5 items-center bg-black/5 text-black/80 hover:bg-black/10 cursor-pointer rounded-2xl"
+                                >
+                                    <img src="/pdfIcon.png" alt="PDF Icon" className="inline w-5 h-5" />
+                                    Download as PDF
+                                </button>
+                                <button
+                                    onClick={handleDownloadDOCX}
+                                    className="text-xs py-3 md:py-0 px-4 min-h-8 flex flex-col md:flex-row gap-1.5 items-center bg-black/5 text-black/80 hover:bg-black/10 cursor-pointer rounded-2xl"
+                                >
+                                    <img src="/docxIcon.png" alt="Docx Icon" className="inline w-5 h-5" />
+                                    Download as DOCX
+                                </button>
+                            </>
+                        }
                     </div>
                     {error &&
                         <div className="flex flex-col gap-1 text-sm mt-4 px-2">

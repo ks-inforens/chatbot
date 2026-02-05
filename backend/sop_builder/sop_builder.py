@@ -275,12 +275,15 @@ def generate_sop(user_inputs, token):
     response = call_perplexity_api(prompt, token)
     content = response.get("choices", [{}])[0].get("message", {}).get("content").strip()
     if not content:
-        return None, prompt
+        raise ValueError("Blank SOP response")
 
     try:
         data = json.loads(content)
         sop = data.get("sop", "").strip()
     except (json.JSONDecodeError, KeyError):
         sop = content.strip()
+
+    if not sop:
+        raise ValueError("Blank SOP response")
 
     return sop, prompt
