@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import json
 
 load_dotenv()
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
+PERPLEXITY_API_KEY = os.getenv("CV_BUILDER_API_KEY")
 
 CV_JSON_SCHEMA = {
     "schema": {

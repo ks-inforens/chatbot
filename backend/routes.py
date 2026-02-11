@@ -29,7 +29,7 @@ def allowed_file(filename):
 def create_chatbot():
     global bot
     bot = PerplexityChatbot(
-        api_key=current_app.config.get('PERPLEXITY_API_KEY'),
+        api_key=current_app.config.get('CHATBOT_API_KEY'),
         content_file_path=current_app.config.get('CONTENT_FILE')
     )
 
@@ -122,7 +122,7 @@ def transcribe():
         audio_file = request.files["file"]
         response = requests.post(
             "https://api.perplexity.ai/audio/transcriptions",
-            headers={"Authorization": f"Bearer {current_app.config.get('PERPLEXITY_API_KEY')}"},
+            headers={"Authorization": f"Bearer {current_app.config.get('CHATBOT_API_KEY')}"},
             files={"file": (audio_file.filename, audio_file, audio_file.mimetype)},
         )
         return jsonify(response.json())
@@ -173,7 +173,7 @@ def sop():
         if missing:
             return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
 
-        token = current_app.config.get("PERPLEXITY_API_KEY")
+        token = current_app.config.get("SOP_BUILDER_API_KEY")
         sop, prompt = generate_sop(data, token)
 
         if not sop:

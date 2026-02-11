@@ -5,6 +5,8 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import re
+from datetime import datetime
+
 
 def add_markdown_text(paragraph, text):
     """
@@ -32,12 +34,14 @@ def add_markdown_text(paragraph, text):
 
         # normal text
         else:
-            paragraph.add_run(part)
+            paragraph.add_run(part.strip())
+
 
 def ensure_full_url(url):
     if not url.startswith(("http://", "https://")):
         return "https://" + url
     return url
+
 
 def add_hyperlink(paragraph, url, text, color=RGBColor(0, 0, 255), underline=True):
     part = paragraph.part
@@ -74,6 +78,7 @@ def add_hyperlink(paragraph, url, text, color=RGBColor(0, 0, 255), underline=Tru
 
     return None
 
+
 def add_bottom_border(paragraph):
     """Add a horizontal line under section headers"""
     p = paragraph._element
@@ -81,11 +86,12 @@ def add_bottom_border(paragraph):
     pBdr = OxmlElement("w:pBdr")
     bottom = OxmlElement("w:bottom")
     bottom.set(qn("w:val"), "single")
-    bottom.set(qn("w:sz"), "12")  
+    bottom.set(qn("w:sz"), "12")
     bottom.set(qn("w:space"), "0")
     bottom.set(qn("w:color"), "000000")
     pBdr.append(bottom)
     pPr.append(pBdr)
+
 
 def normalize_text(text):
     stripped = text.strip()
@@ -98,6 +104,46 @@ def normalize_text(text):
         if stripped.lower().startswith("json"):
             stripped = stripped[4:].strip()
     return stripped
+
+
+def format_date_uk(date_str):
+    """
+    Try to parse a date string in common formats and return as dd/MM/YYYY.
+    If parsing fails or string is empty, return the original string.
+    """
+    if not date_str:
+        return date_str
+
+    date_str = date_str.strip()
+    # If it already looks like dd/MM/YYYY, keep it
+    if re.fullmatch(r"\d{2}/\d{2}/\d{4}", date_str):
+        return date_str
+
+    # Commonly expected formats; extend as needed
+    formats = [
+        "%Y-%m-%d",     # 2024-03-15
+        "%d-%m-%Y",     # 15-03-2024
+        "%m-%d-%Y",     # 03-15-2024
+        "%Y/%m/%d",     # 2024/03/15
+        "%d/%m/%Y",     # 15/03/2024
+        "%m/%d/%Y",     # 03/15/2024
+        "%d %b %Y",     # 15 Mar 2024
+        "%d %B %Y",     # 15 March 2024
+        "%b %Y",        # Mar 2024
+        "%B %Y",        # March 2024
+        "%Y",           # 2024
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            return dt.strftime("%d/%m/%Y")
+        except ValueError:
+            continue
+
+    # If nothing matched, return original
+    return date_str
+
 
 def save_as_docx(text, filename="generated_cv.docx"):
     doc = Document()
@@ -200,8 +246,12 @@ def save_as_docx(text, filename="generated_cv.docx"):
             for idx, job in enumerate(work_exp):
                 job_title = job.get("job_title", "")
                 company_name = job.get("company_name", "")
-                start_date = job.get("start_date", "")
-                end_date = job.get("end_date", "")
+                start_date_raw = job.get("start_date", "")
+                end_date_raw = job.get("end_date", "")
+
+                start_date = format_date_uk(start_date_raw) if start_date_raw else ""
+                end_date = format_date_uk(end_date_raw) if end_date_raw else ""
+
                 dates = ""
                 if start_date and end_date:
                     dates = f"{start_date} - {end_date}"
@@ -209,6 +259,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
                     dates = f"{start_date} - Present"
 
                 para = doc.add_paragraph()
+                para.paragraph_format.space_after = Pt(1)
                 add_markdown_text(para, job_title)
                 for run in para.runs:
                     run.bold = True
@@ -247,8 +298,13 @@ def save_as_docx(text, filename="generated_cv.docx"):
                 course = edu.get("course", "")
                 discipline = edu.get("discipline", "")
                 result = edu.get("results", "")
-                start_date = edu.get("start_date", "")
-                end_date = edu.get("end_date", "")
+
+                start_date_raw = edu.get("start_date", "")
+                end_date_raw = edu.get("end_date", "")
+
+                start_date = format_date_uk(start_date_raw) if start_date_raw else ""
+                end_date = format_date_uk(end_date_raw) if end_date_raw else ""
+
                 dates = ""
                 if start_date and end_date:
                     dates = f"{start_date} - {end_date}"
@@ -317,6 +373,7 @@ def save_as_docx(text, filename="generated_cv.docx"):
     # === 5. Skills ===
     skills = data.get("skills", [])
     if skills:
+        add_section_header("Skills")
         p = doc.add_paragraph()
         add_markdown_text(p, ", ".join(skills))
 
@@ -327,8 +384,10 @@ def save_as_docx(text, filename="generated_cv.docx"):
         for cert in certs:
             name = cert.get("name", "")
             organisation = cert.get("organisation", "")
-            date = cert.get("date", "")
+            date_raw = cert.get("date", "")
             type_ = cert.get("type", "")
+
+            date = format_date_uk(date_raw) if date_raw else ""
 
             line = f"{name}"
             if organisation:

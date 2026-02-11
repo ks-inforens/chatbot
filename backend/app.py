@@ -31,7 +31,11 @@ def swagger_spec():
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-app.config['PERPLEXITY_API_KEY'] = os.getenv('PERPLEXITY_API_KEY')
+app.config['CV_BUILDER_API_KEY'] = os.getenv('CV_BUILDER_API_KEY')
+app.config['SOP_BUILDER_API_KEY'] = os.getenv('SOP_BUILDER_API_KEY')
+app.config['SCHOLARSHIP_FINDER_API_KEY'] = os.getenv('SCHOLARSHIP_FINDER_API_KEY')
+app.config['CHATBOT_API_KEY'] = os.getenv('CHATBOT_API_KEY')
+app.config['TEST_API_KEY'] = os.getenv('TEST_API_KEY')
 app.config['CONTENT_FILE'] = os.getenv('CONTENT_FILE')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
