@@ -29,14 +29,17 @@ def swagger_spec():
         os.path.join(app.root_path, "specs"), "api_spec.yaml"
     )
 
+def clean_env(key: str) -> str:
+    return os.getenv(key, "").strip()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
-app.config['CV_BUILDER_API_KEY'] = os.getenv('CV_BUILDER_API_KEY')
-app.config['SOP_BUILDER_API_KEY'] = os.getenv('SOP_BUILDER_API_KEY')
-app.config['SCHOLARSHIP_FINDER_API_KEY'] = os.getenv('SCHOLARSHIP_FINDER_API_KEY')
-app.config['CHATBOT_API_KEY'] = os.getenv('CHATBOT_API_KEY')
-app.config['TEST_API_KEY'] = os.getenv('TEST_API_KEY')
-app.config['CONTENT_FILE'] = os.getenv('CONTENT_FILE')
+app.config['SQLALCHEMY_DATABASE_URI'] = clean_env('DATABASE_URL')
+app.config['CV_BUILDER_API_KEY'] = clean_env('CV_BUILDER_API_KEY')
+app.config['SOP_BUILDER_API_KEY'] = clean_env('SOP_BUILDER_API_KEY')
+app.config['SCHOLARSHIP_FINDER_API_KEY'] = clean_env('SCHOLARSHIP_FINDER_API_KEY')
+app.config['CHATBOT_API_KEY'] = clean_env('CHATBOT_API_KEY')
+app.config['TEST_API_KEY'] = clean_env('TEST_API_KEY')
+app.config['CONTENT_FILE'] = clean_env('CONTENT_FILE')
+
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
