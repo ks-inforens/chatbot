@@ -6,6 +6,7 @@ from db import db, init_db
 from routes import bp
 from flask_swagger_ui import get_swaggerui_blueprint
 from models import Query, CVUpload
+from chatbot.chatbot import PerplexityChatbot
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -43,6 +44,10 @@ app.config['CONTENT_FILE'] = clean_env('CONTENT_FILE')
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+app.extensions['chatbot'] = PerplexityChatbot(
+    api_key=app.config['CHATBOT_API_KEY'],
+    content_file_path=app.config['CONTENT_FILE']
+)
 
 init_db(app)
 app.register_blueprint(bp)

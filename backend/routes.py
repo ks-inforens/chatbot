@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, send_file
 from werkzeug.utils import secure_filename
 from models import db, Query  , CVUpload
-from chatbot.chatbot import PerplexityChatbot
 from scholarship_finder.scholarship import build_prompt as scholarship_prompt, fetch_scholarships
 from sop_builder.sop_builder import generate_sop, save_pdf, save_docx
 from cv_builder.save import save_as_docx  
@@ -18,20 +17,10 @@ import re
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
-bot = None
-
 ALLOWED_EXTENSIONS = {'pdf', 'docx'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@bp.before_app_request
-def create_chatbot():
-    global bot
-    bot = PerplexityChatbot(
-        api_key=current_app.config.get('CHATBOT_API_KEY'),
-        content_file_path=current_app.config.get('CONTENT_FILE')
-    )
 
 # @bp.after_request
 # def add_cors_headers(response):
@@ -57,6 +46,7 @@ def ask():
     ua = request.headers.get("User-Agent")
 
     try:
+        bot = current_app.extensions['chatbot']
         raw_answer = bot.ask_question(question, session_id)
         latency_ms = int((time.time() - start) * 1000)
 
@@ -65,9 +55,10 @@ def ask():
             user_id=user_id,
             question=question,
             answer=raw_answer["answer"],
-            model="perplexity-sonar",
+            model=raw_answer.get("model_used", "sonar"),
             latency_ms=latency_ms,
-            success=True,
+            success=raw_answer.get("success", True),
+            error=raw_answer.get("error"),
             ip_address=ip,
             user_agent=ua,
         )
@@ -115,7 +106,7 @@ def feedback():
         current_app.logger.error(f"Error updating feedback: {e}")
         return jsonify({"error": str(e)}), 500
 
-@bp.route("/transcribe")
+@bp.route("/transcribe", methods=["POST"])
 @swag_from('specs/api_spec.yaml', endpoint='api.transcribe')
 def transcribe():
     try:
@@ -124,6 +115,7 @@ def transcribe():
             "https://api.perplexity.ai/audio/transcriptions",
             headers={"Authorization": f"Bearer {current_app.config.get('CHATBOT_API_KEY')}"},
             files={"file": (audio_file.filename, audio_file, audio_file.mimetype)},
+            timeout=(5, 60)
         )
         return jsonify(response.json())
     except Exception as e:
