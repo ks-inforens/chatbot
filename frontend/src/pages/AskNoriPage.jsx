@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { API_BASE_URL, askQuestion, sendFeedback } from "../data/api";
+import { API_BASE_URL, WHATSAPP_SUPPORT_URL, askQuestion, sendFeedback } from "../data/api";
 import {
     FaThumbsUp,
     FaThumbsDown,
@@ -330,6 +330,10 @@ export default function AskNoriPage() {
                 </p>
                 <p>
                     For expert guidance, you can directly <a href="https://www.inforens.com/contact-us" target="_blank" className="underline text-orange-700">contact us</a>!
+                </p>
+                <p>
+                    Not happy with Nori's answers? Chat with our support team on{" "}
+                    <a href={WHATSAPP_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="underline text-orange-700">WhatsApp</a>.
                 </p>
             </footer>
         </div>

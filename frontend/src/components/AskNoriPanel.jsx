@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import { Copy, Check } from "lucide-react";
 import FeaturesDropdown from "./FeaturesDropdown";
-import { API_BASE_URL } from "../data/api";
+import { API_BASE_URL, WHATSAPP_SUPPORT_URL } from "../data/api";
 import ReactMarkdown from "react-markdown";
 
 function uid() {
@@ -330,6 +330,11 @@ export default function AskNoriPanel({ sessionId, userId, onFeatureSelect }) {
           </div>
         )}
       </div>
+
+      <p className="text-[11px] text-center text-black/40 px-4 mb-1">
+        Not happy with Nori? Chat with us on{" "}
+        <a href={WHATSAPP_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="underline text-orange-700">WhatsApp</a>.
+      </p>
 
       <form className="w-full flex flex-col px-4 my-2 mb-4" onSubmit={onSend}>
         <div className="w-full flex gap-2 items-center rounded-full px-3 py-2 border-gradient-animation bg-gradient-to-r from-orange-400 via-yellow-500 to-red-500">
