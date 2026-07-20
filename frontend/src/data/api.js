@@ -1,4 +1,5 @@
-export const API_BASE_URL = 'https://inforens-chatbot.onrender.com/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://inforens-chatbot.onrender.com/api';
+export const WHATSAPP_SUPPORT_URL = 'https://wa.me/447587039853';
 
 export async function askQuestion(question, sessionId, userId) {
     const res = await fetch(`${API_BASE_URL}/ask`, {
