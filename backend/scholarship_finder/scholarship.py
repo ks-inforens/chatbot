@@ -1,6 +1,7 @@
 import requests
 import json
 import re
+from perplexity_api import AGENT_API_URL, agent_output_text, build_agent_payload
 
 def extract_json_object(text):
     if not text:
@@ -179,31 +180,29 @@ def _request_scholarships(prompt):
     #Single place that owns the Perplexity call. Raises requests exceptions so the
     #caller keeps its own error mapping.
     from flask import current_app
-    url = "https://api.perplexity.ai/chat/completions"
     headers = {
         "Authorization": f"Bearer {current_app.config.get('SCHOLARSHIP_FINDER_API_KEY')}",
         "Content-Type": "application/json"
     }
-    #NOTE: do not add "reasoning_effort" here. "sonar" is not a reasoning model, and
+    #NOTE: do not add a "reasoning" effort here. "sonar" is not a reasoning model, and
     #sending it made the API answer 200 OK with an EMPTY completion (completion_tokens=0)
     #about three times out of four, and roughly 3x slower. That was the cause of the
     #"We could not find your scholarships at this time!" message users were seeing.
-    payload = {
-        "model": "sonar",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": SCHOLARSHIP_MAX_TOKENS,
-        "response_format": {
+    payload = build_agent_payload(
+        [{"role": "user", "content": prompt}],
+        max_output_tokens=SCHOLARSHIP_MAX_TOKENS,
+        response_format={
             "type": "json_schema",
             "json_schema": {
                 "name": "scholarship_list",
                 "schema": SCHOLARSHIP_JSON_SCHEMA
             }
         },
-    }
+    )
 
-    response = requests.post(url, json=payload, headers=headers, timeout=30)
+    response = requests.post(AGENT_API_URL, json=payload, headers=headers, timeout=30)
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"]
+    return agent_output_text(response.json())
 
 def fetch_scholarships(prompt):
     try:

@@ -7,6 +7,7 @@ from cv_builder.save import save_as_docx
 from cv_builder.parse_cv import extract_info_from_pdf, extract_info_from_docx, extract_json_object
 from cv_builder.prompt_builder import build_prompt_CV as cv_prompt
 from cv_builder.generate_cv import call_perplexity
+from perplexity_api import DEFAULT_MODEL
 from flasgger import swag_from
 import requests
 import time
@@ -55,7 +56,7 @@ def ask():
             user_id=user_id,
             question=question,
             answer=raw_answer["answer"],
-            model=raw_answer.get("model_used", "sonar"),
+            model=raw_answer.get("model_used", DEFAULT_MODEL),
             latency_ms=latency_ms,
             success=raw_answer.get("success", True),
             error=raw_answer.get("error"),

@@ -5,6 +5,7 @@ from docx import Document  # to download sop as doc
 import re
 import os
 import PyPDF2  # for cv upload and parsing
+from perplexity_api import AGENT_API_URL, agent_output_text, build_agent_payload
 
 def remove_sop_heading(text: str) -> str:
     """
@@ -226,12 +227,10 @@ def save_docx(filename, content):
     doc.save(filename)
 
 def call_perplexity_api(prompt, token):
-    url = "https://api.perplexity.ai/chat/completions"
-    payload = {
-        "model": "sonar",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 2048,
-        "response_format": {
+    payload = build_agent_payload(
+        [{"role": "user", "content": prompt}],
+        max_output_tokens=2048,
+        response_format={
             "type": "json_schema",
             "json_schema": {
                 "name": "sop_response",
@@ -248,24 +247,18 @@ def call_perplexity_api(prompt, token):
                     "additionalProperties": False
                 }
             }
-        }
-    }
+        },
+    )
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response = requests.post(AGENT_API_URL, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException:
-        return {
-            "choices": [{
-                "message": {
-                    "content": ""
-                }
-            }]
-        }
+        return {"output_text": ""}
 
 # === Exported function for API use ===
 
@@ -273,7 +266,7 @@ def generate_sop(user_inputs, token):
     """CORE function for Flask API, returns (sop, prompt)"""
     prompt = build_sop_prompt(user_inputs)
     response = call_perplexity_api(prompt, token)
-    content = response.get("choices", [{}])[0].get("message", {}).get("content").strip()
+    content = agent_output_text(response).strip()
     if not content:
         raise ValueError("Blank SOP response")
 
