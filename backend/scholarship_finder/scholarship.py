@@ -26,8 +26,57 @@ def clean_json(text):
     
     # Remove trailing commas before closing braces/brackets
     text = re.sub(r',(\s*[}\]])', r'\1', text)
-    
+
     return text.strip()
+
+#Enforced at the API level so the model can't wrap the JSON in prose or markdown,
+#which the prompt alone only asks for politely.
+SCHOLARSHIP_JSON_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "scholarships": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "deadline": {"type": "string"},
+                },
+                "required": ["name", "description", "deadline"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["scholarships"],
+    "additionalProperties": False,
+}
+
+SCHOLARSHIP_MAX_TOKENS = 1500
+
+def salvage_scholarships(text):
+    #A token-limit cut leaves the "scholarships" array unclosed, so json.loads rejects
+    #the whole payload. Walk the array instead and keep every entry that was fully
+    #written rather than failing a request that did produce usable results.
+    marker = re.search(r'"scholarships"\s*:\s*\[', text or "")
+    if not marker:
+        return []
+
+    decoder = json.JSONDecoder()
+    items = []
+    i = marker.end()
+    while i < len(text):
+        start = text.find('{', i)
+        if start == -1:
+            break
+        try:
+            obj, end = decoder.raw_decode(text, start)
+        except ValueError:
+            break  #this is the entry that got cut off
+        if isinstance(obj, dict) and obj.get("name"):
+            items.append(obj)
+        i = end
+    return items
 
 def get_user_details():
     print("Please enter your details below.")
@@ -126,24 +175,45 @@ Ensure the JSON you return is syntactically valid and parseable.
 
     return "\n".join(lines)
 
-def fetch_scholarships(prompt):
+def _request_scholarships(prompt):
+    #Single place that owns the Perplexity call. Raises requests exceptions so the
+    #caller keeps its own error mapping.
     from flask import current_app
     url = "https://api.perplexity.ai/chat/completions"
     headers = {
         "Authorization": f"Bearer {current_app.config.get('SCHOLARSHIP_FINDER_API_KEY')}",
         "Content-Type": "application/json"
     }
+    #NOTE: do not add "reasoning_effort" here. "sonar" is not a reasoning model, and
+    #sending it made the API answer 200 OK with an EMPTY completion (completion_tokens=0)
+    #about three times out of four, and roughly 3x slower. That was the cause of the
+    #"We could not find your scholarships at this time!" message users were seeing.
     payload = {
         "model": "sonar",
         "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 1000,
-        "reasoning_effort": "medium"
+        "max_tokens": SCHOLARSHIP_MAX_TOKENS,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "scholarship_list",
+                "schema": SCHOLARSHIP_JSON_SCHEMA
+            }
+        },
     }
 
+    response = requests.post(url, json=payload, headers=headers, timeout=30)
+    response.raise_for_status()
+    return response.json()["choices"][0]["message"]["content"]
+
+def fetch_scholarships(prompt):
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
+        content = _request_scholarships(prompt)
+
+        #An empty completion still slips through occasionally; one retry is far cheaper
+        #than sending the user away empty-handed.
+        if not content or not content.strip():
+            print("Empty completion from Perplexity, retrying once.")
+            content = _request_scholarships(prompt)
 
         print("RAW PERPLEXITY OUTPUT:\n", content)
         #if empty / none / whitespace output from perplexity
@@ -152,7 +222,7 @@ def fetch_scholarships(prompt):
                 "scholarships": [],
                 "error": "Something went wrong. Please try again."
             }
-        
+
         extracted = extract_json_object(content) #extract json object
 
         #if no json object extracted from perplexity
@@ -166,19 +236,23 @@ def fetch_scholarships(prompt):
 
         try:
             parsed = json.loads(cleaned)
-        except json.JSONDecodeError: #invalid json
+        except json.JSONDecodeError: #invalid json, usually a token-limit cut
+            recovered = salvage_scholarships(content)
+            if recovered:
+                print(f"Recovered {len(recovered)} scholarship(s) from a truncated response.")
+                return {"scholarships": recovered, "error": None}
             return {
                 "scholarships": [],
                 "error": "We ran into an issue while finding scholarships. Please try again shortly."
             }
-        
-        if not isinstance(parsed, dict) or "scholarships" not in parsed: #to handle random structure in json
-            return {
-                "scholarships": [],
-                "error": "We couldn’t find valid scholarships for your profile. Please try again."
-            }
 
-        if not isinstance(parsed["scholarships"], list): #ensure scholarships is actually a list
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("scholarships"), list):
+            #Wrong shape entirely, or the list arrived truncated inside a valid-looking
+            #object; take whatever complete entries the model did produce.
+            recovered = salvage_scholarships(content)
+            if recovered:
+                print(f"Recovered {len(recovered)} scholarship(s) from a malformed response.")
+                return {"scholarships": recovered, "error": None}
             return {
                 "scholarships": [],
                 "error": "We couldn’t find valid scholarships for your profile. Please try again."
@@ -188,6 +262,15 @@ def fetch_scholarships(prompt):
         return {
             "scholarships": parsed["scholarships"],
             "error": None
+        }
+
+    except requests.exceptions.HTTPError as e:
+        #HTTPError subclasses RequestException, so without this branch a 401 (bad or
+        #missing SCHOLARSHIP_FINDER_API_KEY) was reported to users as a connection problem.
+        print(f"Perplexity API returned an HTTP error: {e}")
+        return {
+            "scholarships": [],
+            "error": "We're having trouble finding scholarships right now. Please try again in a moment."
         }
 
     except requests.exceptions.RequestException: #perplexity not reachable
