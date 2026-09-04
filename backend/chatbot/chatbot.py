@@ -1,7 +1,12 @@
 import requests
 import json
 import uuid
-from chatbot.helper import clean_json, remove_citations
+from chatbot.helper import (
+    clean_json,
+    extract_json_string_field,
+    remove_citations,
+    trim_to_last_sentence,
+)
 from chatbot.retrieval import load_chunks, build_index, known_urls, top_k, validate_links, DEFAULT_FALLBACK_URL
 from cv_builder.parse_cv import extract_json_object
 
@@ -12,6 +17,21 @@ MAX_SESSIONS = 5000 #cap on number of tracked sessions before evicting the oldes
 
 TOP_K = 4 #number of retrieved content chunks injected into the prompt
 CHUNK_CHAR_BUDGET = 1500 #max characters taken from each retrieved chunk
+
+#Broad "tell me everything" questions routinely ran past the old 600-token ceiling.
+#When that happens the model stops mid-string and the JSON object never closes, so
+#the whole reply is unparseable. The budget below covers observed answers with room
+#to spare; ANSWER_RETRY_TOKENS backs the one brevity retry we allow after a cut.
+ANSWER_MAX_TOKENS = 1200
+ANSWER_RETRY_TOKENS = 900
+
+#Appended to the user turn (not as a trailing system message, which would break the
+#role alternation the API expects) when the first attempt was cut off.
+BREVITY_REMINDER = (
+    "Your previous reply was cut off because it was too long. Answer the same question "
+    "again in at most 4 short sentences or 5 brief bullet points, and make sure the JSON "
+    "object is complete, including the closing brace."
+)
 
 #single source of truth for the out-of-scope refusal. The URL is deliberately
 #kept out of this string because rule #10 requires all links to live in the
@@ -114,8 +134,12 @@ class PerplexityChatbot:
         response.raise_for_status()
         response_json = response.json()
         model_used = response_json.get("model", "sonar")
-        content = response_json['choices'][0]['message']['content']
-        return content, model_used
+        choice = response_json['choices'][0]
+        content = choice['message']['content']
+        #"length" means the model was cut off at max_tokens rather than finishing,
+        #which is the difference between a bad answer and an unparseable one.
+        finish_reason = choice.get("finish_reason")
+        return content, model_used, finish_reason
 
     def _is_in_scope(self, user_question, history):
         #dedicated gate call: a constrained classifier decides scope BEFORE we spend
@@ -128,7 +152,7 @@ class PerplexityChatbot:
             {"role": "user", "content": user_question}
         ]
         try:
-            content, _ = self._chat_completion(
+            content, _, _ = self._chat_completion(
                 messages,
                 "topic_classifier",
                 CLASSIFIER_JSON_SCHEMA,
@@ -143,6 +167,28 @@ class PerplexityChatbot:
         except Exception as e:
             print(f"Topic classifier failed, allowing question through: {e}")
             return True
+
+    def _retry_shorter(self, messages, user_question, raw_answer, model_used, finish_reason):
+        #Re-asks the same question with the brevity reminder folded into the user turn.
+        #Keeps the original truncated response when the retry errors out or is itself
+        #cut off with less usable text, so the salvage path still has something to work with.
+        retry_messages = messages[:-1] + [
+            {"role": "user", "content": f"{user_question}\n\n[{BREVITY_REMINDER}]"}
+        ]
+        try:
+            retry_answer, retry_model, retry_finish = self._chat_completion(
+                retry_messages,
+                "nori_answer",
+                ANSWER_JSON_SCHEMA,
+                max_tokens=ANSWER_RETRY_TOKENS,
+            )
+        except requests.exceptions.RequestException as e:
+            print(f"Brevity retry failed, keeping the truncated response: {e}")
+            return raw_answer, model_used, finish_reason
+
+        if extract_json_object(retry_answer) or len(retry_answer) > len(raw_answer):
+            return retry_answer, retry_model, retry_finish
+        return raw_answer, model_used, finish_reason
 
     def ask_question(self, user_question, session_id):
         if not self.chunks:
@@ -208,23 +254,43 @@ class PerplexityChatbot:
         ]
 
         try:
-            raw_answer, model_used = self._chat_completion(
+            raw_answer, model_used, finish_reason = self._chat_completion(
                 messages,
                 "nori_answer",
                 ANSWER_JSON_SCHEMA,
-                max_tokens=600,
+                max_tokens=ANSWER_MAX_TOKENS,
             )
+            if finish_reason == "length":
+                print(f"Answer hit the token ceiling, retrying shorter. Question: {user_question!r}")
+                raw_answer, model_used, finish_reason = self._retry_shorter(
+                    messages, user_question, raw_answer, model_used, finish_reason
+                )
+
             processed_answer = extract_json_object(raw_answer) #extract json from response
-            if not processed_answer:
-                print(raw_answer)
-                return {
-                    "answer": "Sorry, I couldn't generate a response right now. Please try again.",
-                    "links": [DEFAULT_FALLBACK_URL],
-                    "success": False,
-                    "error": "json_extraction_failed",
-                    }
-            processed_answer = clean_json(processed_answer)
-            parsed = json.loads(processed_answer)
+            degraded_error = None
+            if processed_answer:
+                parsed = json.loads(clean_json(processed_answer))
+            else:
+                #The object never closed (almost always a token-limit cut). Recover the
+                #answer text that did make it instead of throwing the whole reply away.
+                salvaged = extract_json_string_field(raw_answer, "answer")
+                if not salvaged:
+                    print(f"Could not parse or salvage answer (finish_reason={finish_reason}): {raw_answer!r}")
+                    return {
+                        "answer": "Sorry, I couldn't generate a response right now. Please try again.",
+                        "links": [DEFAULT_FALLBACK_URL],
+                        "success": False,
+                        "error": "json_extraction_failed",
+                        }
+                #Any links in a truncated reply are half-written, so fall back to the
+                #most relevant retrieved URL rather than trusting a partial one.
+                parsed = {
+                    "answer": trim_to_last_sentence(remove_citations(salvaged)),
+                    "links": allowed_urls[:1],
+                }
+                degraded_error = "recovered_truncated_response"
+                print(f"Recovered a truncated answer (finish_reason={finish_reason}). Question: {user_question!r}")
+
             if "answer" not in parsed or "links" not in parsed:
                 return {
                     "answer": "Sorry, something went wrong while processing the response.",
@@ -235,7 +301,9 @@ class PerplexityChatbot:
             parsed["answer"] = remove_citations(parsed["answer"])
             parsed["links"] = validate_links(parsed["links"], self.known_urls)
             parsed["success"] = True
-            parsed["error"] = None
+            #Non-null on a salvaged reply: the user got a usable answer, but the
+            #truncation still needs to show up in the query log.
+            parsed["error"] = degraded_error
             parsed["model_used"] = model_used
 
             history.append({"role": "user", "content": user_question})
