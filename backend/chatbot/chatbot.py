@@ -9,6 +9,13 @@ from chatbot.helper import (
 )
 from chatbot.retrieval import load_chunks, build_index, known_urls, top_k, validate_links, DEFAULT_FALLBACK_URL
 from cv_builder.parse_cv import extract_json_object
+from perplexity_api import (
+    AGENT_API_URL,
+    DEFAULT_MODEL,
+    agent_finish_reason,
+    agent_output_text,
+    build_agent_payload,
+)
 
 #simple in session memory
 SESSION_MEMORY = {}
@@ -109,36 +116,34 @@ class PerplexityChatbot:
     def _chat_completion(self, messages, schema_name, schema, max_tokens, timeout=(5, 25)):
         #single place that owns the Perplexity endpoint, auth header and JSON-schema
         #response format. Raises requests exceptions so callers keep their own handling.
-        payload = {
-            "model": "sonar",
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "response_format": {
+        payload = build_agent_payload(
+            messages,
+            max_output_tokens=max_tokens,
+            response_format={
                 "type": "json_schema",
                 "json_schema": {
                     "name": schema_name,
                     "schema": schema
                 }
             },
-        }
+        )
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         response = requests.post(
-            "https://api.perplexity.ai/chat/completions",
+            AGENT_API_URL,
             json=payload,
             headers=headers,
             timeout=timeout
         )
         response.raise_for_status()
         response_json = response.json()
-        model_used = response_json.get("model", "sonar")
-        choice = response_json['choices'][0]
-        content = choice['message']['content']
+        model_used = response_json.get("model", DEFAULT_MODEL)
+        content = agent_output_text(response_json)
         #"length" means the model was cut off at max_tokens rather than finishing,
         #which is the difference between a bad answer and an unparseable one.
-        finish_reason = choice.get("finish_reason")
+        finish_reason = agent_finish_reason(response_json)
         return content, model_used, finish_reason
 
     def _is_in_scope(self, user_question, history):
